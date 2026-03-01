@@ -1,0 +1,651 @@
+{% extends 'base.html' %}
+{% block title %}DataWave Analytics · Analyse Instagram{% endblock %}
+
+{% block head_extra %}
+<style>
+/* ══════════════════════════════════════════════════════════
+   PAGE D'ACCUEIL — ZÉRO DÉPENDANCE EXTERNE
+   Polices système, animations CSS pures
+═══════════════════════════════════════════════════════════ */
+:root{
+  --ink:#04080f;--ink2:#080f1c;--ink3:#0d1829;
+  --acc:#3b82f6;--acc2:#60a5fa;--acc3:#93c5fd;
+  --pur:#8b5cf6;--teal:#06b6d4;--grn:#10b981;--amb:#f59e0b;--red:#ef4444;
+  --txt:#f0f6ff;--t2:#7ea8cc;--t3:#3a5570;
+  --wire:rgba(59,130,246,.07);--wire2:rgba(59,130,246,.13);
+}
+
+/* ── RESET ── */
+.hp *{box-sizing:border-box}
+.hp{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,system-ui,sans-serif;
+    background:var(--ink);color:var(--txt);overflow-x:hidden}
+
+/* ── GRID BG (CSS only, instant) ── */
+.hp-bg{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--wire) 1px,transparent 1px),
+    linear-gradient(90deg,var(--wire) 1px,transparent 1px);
+  background-size:64px 64px}
+
+/* ── GRADIENT ORBS (no blur, CSS radial only) ── */
+.hp-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.hp-orbs::before{content:'';position:absolute;width:900px;height:900px;
+  top:-300px;right:-200px;
+  background:radial-gradient(circle,rgba(59,130,246,.06) 0%,transparent 65%)}
+.hp-orbs::after{content:'';position:absolute;width:700px;height:700px;
+  bottom:-200px;left:-150px;
+  background:radial-gradient(circle,rgba(139,92,246,.05) 0%,transparent 65%)}
+
+/* ── ANIMATIONS ── */
+@keyframes up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes scroll-x{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+.u1{opacity:0;animation:up .55s .05s ease forwards}
+.u2{opacity:0;animation:up .55s .15s ease forwards}
+.u3{opacity:0;animation:up .55s .25s ease forwards}
+.u4{opacity:0;animation:up .55s .35s ease forwards}
+.u5{opacity:0;animation:up .55s .45s ease forwards}
+.u6{opacity:0;animation:up .7s  .3s ease forwards}
+
+/* ═══════════════════════════
+   HERO
+═══════════════════════════ */
+.hero{
+  position:relative;z-index:1;
+  min-height:100svh;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:0;
+}
+.hero-l,.hero-r{padding:9vh 5vw 7vh}
+.hero-l{
+  display:flex;flex-direction:column;justify-content:center;
+  border-right:1px solid var(--wire2);
+  padding-left:min(7vw,80px);
+}
+.hero-r{
+  display:flex;flex-direction:column;justify-content:center;gap:1rem;
+  padding-right:min(6vw,70px);
+}
+
+/* Pill badge */
+.h-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--acc2);border:1px solid rgba(59,130,246,.22);
+  background:rgba(59,130,246,.07);padding:.32rem .85rem;border-radius:100px;
+  width:fit-content;margin-bottom:1.75rem;
+}
+.h-dot{width:6px;height:6px;border-radius:50%;background:#34d399;
+  box-shadow:0 0 6px #34d399;animation:pulse 2s infinite}
+
+/* Heading */
+.h-title{
+  font-size:clamp(2.4rem,4.8vw,3.9rem);font-weight:900;
+  line-height:1.07;letter-spacing:-.035em;
+  color:var(--txt);margin-bottom:1.3rem;
+}
+.h-title .hl{
+  display:inline-block;
+  background:linear-gradient(130deg,#3b82f6 0%,#8b5cf6 50%,#06b6d4 100%);
+  background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:scroll-x 6s linear infinite;
+}
+.h-lead{font-size:1rem;color:var(--t2);line-height:1.8;max-width:480px;margin-bottom:2.2rem}
+.h-lead strong{color:var(--txt);font-weight:600}
+
+/* CTA buttons */
+.h-cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:2.8rem}
+.btn-main{
+  display:inline-flex;align-items:center;gap:.55rem;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  color:#fff;padding:.78rem 1.75rem;border-radius:10px;
+  font-weight:700;font-size:.88rem;border:none;cursor:pointer;
+  text-decoration:none;
+  box-shadow:0 4px 24px rgba(37,99,235,.35);
+  transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;
+}
+.btn-main::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(rgba(255,255,255,.12),transparent);
+  opacity:0;transition:opacity .18s}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(37,99,235,.45);opacity:1}
+.btn-main:hover::after{opacity:1}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:.45rem;
+  color:var(--t2);padding:.78rem 1.4rem;border-radius:10px;
+  border:1px solid rgba(59,130,246,.16);background:rgba(59,130,246,.04);
+  font-weight:600;font-size:.85rem;text-decoration:none;transition:all .18s;
+}
+.btn-ghost:hover{border-color:rgba(59,130,246,.4);color:var(--txt);opacity:1}
+
+/* KPI strip */
+.h-kpis{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid rgba(59,130,246,.12);border-radius:12px;overflow:hidden;
+  background:rgba(59,130,246,.07);gap:1px;
+}
+.hk{
+  background:var(--ink2);padding:.85rem .7rem;text-align:center;
+  position:relative;
+}
+.hk::after{content:'';position:absolute;bottom:0;left:15%;right:15%;
+  height:2.5px;background:var(--hc,#3b82f6);border-radius:3px 3px 0 0}
+.hk-v{font-size:1.45rem;font-weight:900;color:var(--txt);line-height:1;
+  font-variant-numeric:tabular-nums}
+.hk-l{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-top:.22rem}
+
+/* Cards right column */
+.hcard{
+  background:var(--ink2);border:1px solid rgba(59,130,246,.12);
+  border-radius:14px;padding:1.2rem 1.25rem;position:relative;overflow:hidden;
+  animation:float 6s ease-in-out infinite;
+}
+.hcard:nth-child(2){animation-delay:-3s}
+.hcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(59,130,246,.5),transparent)}
+.hcard-label{
+  font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--acc2);margin-bottom:.8rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.hcard-live{
+  font-size:.58rem;color:#34d399;background:rgba(52,211,153,.08);
+  border:1px solid rgba(52,211,153,.18);padding:2px 7px;border-radius:20px;
+  display:flex;align-items:center;gap:.3rem;
+}
+
+/* Horizontal mini bars */
+.mbar{display:flex;align-items:center;gap:.55rem;margin-bottom:.38rem}
+.mbar-flag{font-size:.85rem;width:20px;text-align:center;flex-shrink:0}
+.mbar-name{font-size:.7rem;color:var(--t2);min-width:75px}
+.mbar-track{flex:1;height:5px;background:rgba(59,130,246,.07);border-radius:3px;overflow:hidden}
+.mbar-fill{height:100%;border-radius:3px;transform-origin:left;
+  transform:scaleX(0);animation:grow .9s ease forwards}
+@keyframes grow{to{transform:scaleX(1)}}
+.mbar-val{font-size:.7rem;font-weight:600;color:var(--txt);min-width:38px;
+  text-align:right;font-variant-numeric:tabular-nums}
+
+/* Inline donut */
+.donut-row{display:flex;align-items:center;gap:1.1rem;
+  margin-top:.85rem;padding-top:.85rem;border-top:1px solid rgba(59,130,246,.07)}
+.d-legend{display:flex;flex-direction:column;gap:.28rem;flex:1}
+.d-item{display:flex;align-items:center;gap:.4rem;font-size:.7rem;color:var(--t2)}
+.d-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ═══════════════════════════
+   TICKER STRIP
+═══════════════════════════ */
+.strip{
+  position:relative;z-index:1;
+  border-top:1px solid rgba(59,130,246,.08);
+  border-bottom:1px solid rgba(59,130,246,.08);
+  background:rgba(8,15,28,.85);
+  padding:.52rem 0;overflow:hidden;
+}
+.strip-track{display:flex;gap:2.5rem;white-space:nowrap;
+  animation:scroll-x 22s linear infinite;width:max-content}
+.tk{display:flex;align-items:center;gap:.45rem;font-size:.74rem;color:var(--t2)}
+.tk b{color:var(--acc2);font-weight:700;font-variant-numeric:tabular-nums}
+.tk-sep{color:rgba(59,130,246,.2);font-size:1.1rem}
+
+/* ═══════════════════════════
+   CONNEXION RAPIDE
+═══════════════════════════ */
+.section{position:relative;z-index:1;padding:5.5rem min(6vw,72px)}
+.section-alt{background:rgba(8,15,28,.6);
+  border-top:1px solid rgba(59,130,246,.07);
+  border-bottom:1px solid rgba(59,130,246,.07)}
+.sec-eyebrow{
+  display:flex;align-items:center;gap:.65rem;
+  font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acc);margin-bottom:.65rem;
+}
+.sec-eyebrow::before{content:'';width:22px;height:1px;background:var(--acc);opacity:.6}
+.sec-title{font-size:clamp(1.65rem,2.8vw,2.3rem);font-weight:900;
+  letter-spacing:-.03em;color:var(--txt);margin-bottom:.45rem;line-height:1.2}
+.sec-title span{background:linear-gradient(130deg,var(--acc),var(--pur));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sec-sub{font-size:.88rem;color:var(--t2);max-width:480px;line-height:1.7;margin-bottom:2.2rem}
+
+/* Role cards grid */
+.roles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.1);
+  border-radius:14px;overflow:hidden;max-width:1140px}
+.rc{
+  background:var(--ink2);padding:1.65rem 1.4rem 1.4rem;
+  display:flex;flex-direction:column;gap:.55rem;
+  cursor:pointer;text-decoration:none;position:relative;overflow:hidden;
+  transition:background .2s;
+}
+.rc:hover{background:rgba(12,22,42,.95);opacity:1}
+.rc:hover .rc-btn{background:var(--rcc,#3b82f6);color:#fff}
+.rc-bar{position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--rcc,#3b82f6)}
+.rc-ico{font-size:2rem;margin-bottom:.1rem}
+.rc-badge{
+  font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 9px;border-radius:20px;width:fit-content;
+  background:color-mix(in srgb,var(--rcc,#3b82f6) 10%,transparent);
+  color:var(--rcc,#3b82f6);
+  border:1px solid color-mix(in srgb,var(--rcc,#3b82f6) 22%,transparent);
+}
+.rc-creds{font-size:.7rem;font-family:monospace;letter-spacing:.03em;
+  background:rgba(0,0,0,.28);border:1px solid rgba(59,130,246,.09);
+  color:#5bb0f0;padding:.28rem .6rem;border-radius:7px}
+.rc-perms{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem;flex:1}
+.rc-perms li{font-size:.75rem;color:var(--t2);display:flex;align-items:center;gap:.35rem}
+.rc-perms li.y{color:#4ade80}
+.rc-perms li.n{color:var(--t3)}
+.rc-btn{width:100%;padding:.6rem;border-radius:8px;
+  font-size:.8rem;font-weight:700;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--rcc,#3b82f6) 25%,transparent);
+  background:color-mix(in srgb,var(--rcc,#3b82f6) 8%,transparent);
+  color:var(--rcc,#3b82f6);transition:all .18s;margin-top:.25rem}
+
+/* ═══════════════════════════
+   MODULES
+═══════════════════════════ */
+.mods-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;max-width:1200px}
+.mod{
+  background:var(--ink2);border:1px solid rgba(59,130,246,.1);
+  border-radius:12px;padding:1.35rem 1.15rem;
+  text-decoration:none;display:flex;flex-direction:column;gap:.5rem;
+  transition:all .22s;position:relative;overflow:hidden;
+}
+.mod::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--mc,#3b82f6),var(--mc2,#60a5fa));
+  transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.mod:hover{transform:translateY(-5px);border-color:var(--mc,#3b82f6);
+  box-shadow:0 16px 48px rgba(0,0,0,.3);opacity:1}
+.mod:hover::after{transform:scaleX(1)}
+.mod-ico{width:40px;height:40px;border-radius:9px;
+  background:color-mix(in srgb,var(--mc,#3b82f6) 10%,transparent);
+  border:1px solid color-mix(in srgb,var(--mc,#3b82f6) 18%,transparent);
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.mod-name{font-size:.9rem;font-weight:700;color:var(--txt)}
+.mod-desc{font-size:.74rem;color:var(--t2);line-height:1.55;flex:1}
+.mod-tags{display:flex;flex-wrap:wrap;gap:.28rem;margin-top:auto}
+.mod-tag{font-size:.58rem;font-weight:600;
+  background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.1);
+  color:var(--t3);padding:2px 7px;border-radius:4px}
+.mod-tag-pro{background:rgba(245,158,11,.07)!important;
+  color:#fbbf24!important;border-color:rgba(245,158,11,.18)!important}
+
+/* ═══════════════════════════
+   DATASET
+═══════════════════════════ */
+.ds-wrap{max-width:1200px;display:grid;grid-template-columns:1fr 1fr;gap:4.5rem;align-items:center}
+.ds-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;margin-bottom:1.4rem}
+.ds-num{
+  background:var(--ink2);border:1px solid rgba(59,130,246,.1);
+  border-radius:10px;padding:.85rem .7rem;text-align:center;position:relative;overflow:hidden;
+}
+.ds-num::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--nc,#3b82f6),var(--nc2,#8b5cf6))}
+.ds-num-v{font-size:1.28rem;font-weight:900;color:var(--txt);line-height:1}
+.ds-num-l{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-top:.28rem}
+.var-cloud{display:flex;flex-wrap:wrap;gap:.28rem}
+.var-chip{font-size:.58rem;font-weight:600;font-family:monospace;
+  background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.1);
+  color:#5fa8e0;padding:3px 8px;border-radius:5px}
+
+/* ═══════════════════════════
+   ÉQUIPE
+═══════════════════════════ */
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
+  max-width:780px;margin:0 auto 1.5rem}
+.tm{
+  background:var(--ink2);border:1px solid rgba(59,130,246,.1);
+  border-radius:14px;padding:1.65rem 1.25rem;text-align:center;
+  transition:transform .2s,border-color .2s;
+}
+.tm:hover{transform:translateY(-4px);border-color:rgba(59,130,246,.25)}
+.tm-av{width:66px;height:66px;border-radius:50%;margin:0 auto .85rem;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.55rem;font-weight:900;color:#fff}
+.tm-role{font-size:.6rem;color:var(--acc);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.32rem}
+.tm-name{font-size:.9rem;font-weight:800;color:var(--txt);margin-bottom:.28rem;line-height:1.3}
+.tm-desc{font-size:.74rem;color:var(--t2)}
+.tm-mail{font-size:.68rem;color:var(--acc2);margin-top:.38rem;display:block;text-decoration:none}
+.team-enc{text-align:center;font-size:.82rem;color:var(--t3)}
+.team-enc strong{color:var(--t2)}
+
+/* ═══════════════════════════
+   RESPONSIVE
+═══════════════════════════ */
+@media(max-width:1100px){
+  .hero{grid-template-columns:1fr}
+  .hero-l{border-right:none;border-bottom:1px solid var(--wire2);padding:7vh 5vw 5vh}
+  .hero-r{display:none}
+  .h-kpis{grid-template-columns:repeat(4,1fr)}
+  .roles-grid{grid-template-columns:repeat(2,1fr)}
+  .mods-grid{grid-template-columns:repeat(3,1fr)}
+  .ds-wrap{grid-template-columns:1fr}
+}
+@media(max-width:680px){
+  .h-kpis{grid-template-columns:repeat(2,1fr)}
+  .mods-grid{grid-template-columns:repeat(2,1fr)}
+  .team-grid{grid-template-columns:1fr}
+  .ds-nums{grid-template-columns:repeat(3,1fr)}
+  .roles-grid{grid-template-columns:1fr}
+  .section{padding:4rem 5vw}
+  .hero-l{padding:5vh 5vw}
+}
+</style>
+{% endblock %}
+
+{% block pub_content %}
+<div class="hp">
+<div class="hp-bg"></div>
+<div class="hp-orbs"></div>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <div class="hero-l">
+    <div class="h-badge u1"><span class="h-dot"></span>ENSEA Abidjan · Promotion 2025–2026</div>
+    <h1 class="h-title u2">
+      Explorez<br><span class="hl">50 000 profils</span><br>Instagram
+    </h1>
+    <p class="h-lead u3">
+      Plateforme d'analyse interactive de <strong>50 000 profils Instagram</strong>
+      à travers <strong>18 variables</strong> socio-démographiques.
+      5 modules, 4 rôles, export Excel — tout en temps réel.
+    </p>
+    <div class="h-cta u4">
+      <a href="{{ url_for('login') }}" class="btn-main">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Accéder à la plateforme
+      </a>
+      <a href="#acces" class="btn-ghost">
+        Connexion rapide
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </a>
+    </div>
+    <div class="h-kpis u5">
+      <div class="hk" style="--hc:#3b82f6"><div class="hk-v" id="kv1">0</div><div class="hk-l">Profils</div></div>
+      <div class="hk" style="--hc:#8b5cf6"><div class="hk-v" id="kv2">0</div><div class="hk-l">Variables</div></div>
+      <div class="hk" style="--hc:#06b6d4"><div class="hk-v" id="kv3">0</div><div class="hk-l">Pays</div></div>
+      <div class="hk" style="--hc:#10b981"><div class="hk-v" id="kv4">0%</div><div class="hk-l">Payants</div></div>
+    </div>
+  </div>
+
+  <div class="hero-r">
+    <!-- Card 1 : top pays -->
+    <div class="hcard u6">
+      <div class="hcard-label">
+        <span>📊 Top pays — profils</span>
+        <span class="hcard-live"><span class="h-dot" style="width:5px;height:5px"></span>Live</span>
+      </div>
+      <div class="mbar"><span class="mbar-flag">🇧🇷</span><span class="mbar-name">Brésil</span><div class="mbar-track"><div class="mbar-fill" style="width:100%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);animation-delay:.1s"></div></div><span class="mbar-val">8 142</span></div>
+      <div class="mbar"><span class="mbar-flag">🇺🇸</span><span class="mbar-name">États-Unis</span><div class="mbar-track"><div class="mbar-fill" style="width:92%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);animation-delay:.2s"></div></div><span class="mbar-val">7 490</span></div>
+      <div class="mbar"><span class="mbar-flag">🇮🇳</span><span class="mbar-name">Inde</span><div class="mbar-track"><div class="mbar-fill" style="width:85%;background:linear-gradient(90deg,#06b6d4,#3b82f6);animation-delay:.3s"></div></div><span class="mbar-val">6 907</span></div>
+      <div class="mbar"><span class="mbar-flag">🇧🇩</span><span class="mbar-name">Bangladesh</span><div class="mbar-track"><div class="mbar-fill" style="width:78%;background:linear-gradient(90deg,#10b981,#06b6d4);animation-delay:.4s"></div></div><span class="mbar-val">6 338</span></div>
+      <div class="mbar"><span class="mbar-flag">🇳🇬</span><span class="mbar-name">Nigeria</span><div class="mbar-track"><div class="mbar-fill" style="width:71%;background:linear-gradient(90deg,#f59e0b,#f87171);animation-delay:.5s"></div></div><span class="mbar-val">5 779</span></div>
+      <div class="donut-row">
+        <svg width="72" height="72" viewBox="0 0 72 72" style="flex-shrink:0">
+          <circle cx="36" cy="36" r="26" fill="none" stroke="rgba(59,130,246,.07)" stroke-width="9"/>
+          <circle cx="36" cy="36" r="26" fill="none" stroke="#3b82f6" stroke-width="9"
+            stroke-dasharray="122 41" stroke-dashoffset="0" transform="rotate(-90 36 36)" stroke-linecap="round"/>
+          <circle cx="36" cy="36" r="26" fill="none" stroke="#fbbf24" stroke-width="9"
+            stroke-dasharray="25 138" stroke-dashoffset="-122" transform="rotate(-90 36 36)" stroke-linecap="round"/>
+          <circle cx="36" cy="36" r="26" fill="none" stroke="#34d399" stroke-width="9"
+            stroke-dasharray="16 147" stroke-dashoffset="-147" transform="rotate(-90 36 36)" stroke-linecap="round"/>
+          <text x="36" y="33" text-anchor="middle" fill="#f0f6ff" font-size="9" font-weight="700" font-family="sans-serif">Sub</text>
+          <text x="36" y="45" text-anchor="middle" fill="#7ea8cc" font-size="7.5" font-family="sans-serif">types</text>
+        </svg>
+        <div class="d-legend">
+          <div class="d-item"><span class="d-dot" style="background:#3b82f6"></span>Free — 74.9%</div>
+          <div class="d-item"><span class="d-dot" style="background:#fbbf24"></span>Premium — 15.2%</div>
+          <div class="d-item"><span class="d-dot" style="background:#34d399"></span>Business — 9.9%</div>
+        </div>
+      </div>
+    </div>
+    <!-- Card 2 : stats rapides -->
+    <div class="hcard u6" style="animation-delay:.5s">
+      <div class="hcard-label">⚡ Indicateurs clés</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+        {% for v,l,c in [('39 ans','Âge moy.','#3b82f6'),('2 133','Foll. moy.','#8b5cf6'),('5.9','Posts/sem','#10b981'),('125K','Max foll.','#f59e0b'),('25.1%','Payants','#ef4444'),('15 ans','Période','#06b6d4')] %}
+        <div style="background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.08);border-radius:8px;padding:.6rem .5rem;text-align:center;position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:{{c}}"></div>
+          <div style="font-size:1rem;font-weight:900;color:#f0f6ff;line-height:1">{{v}}</div>
+          <div style="font-size:.58rem;color:#3a5570;text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">{{l}}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ TICKER ═══════════════ -->
+<div class="strip">
+  <div class="strip-track" aria-hidden="true">
+    {% for _ in range(2) %}
+    <span class="tk"><b>50 000</b> profils</span><span class="tk-sep">—</span>
+    <span class="tk"><b>18</b> variables</span><span class="tk-sep">—</span>
+    <span class="tk"><b>10</b> pays</span><span class="tk-sep">—</span>
+    <span class="tk">Période <b>2010–2025</b></span><span class="tk-sep">—</span>
+    <span class="tk"><b>25.1%</b> comptes payants</span><span class="tk-sep">—</span>
+    <span class="tk"><b>2 133</b> followers moy.</span><span class="tk-sep">—</span>
+    <span class="tk">Âge moy. <b>39 ans</b></span><span class="tk-sep">—</span>
+    <span class="tk"><b>5</b> modules d'analyse</span><span class="tk-sep">—</span>
+    <span class="tk"><b>4</b> rôles d'accès</span><span class="tk-sep">—</span>
+    <span class="tk">Export <b>Excel</b></span><span class="tk-sep">—</span>
+    <span class="tk"><b>ENSEA</b> Abidjan 2026</span><span class="tk-sep">—</span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ═══════════════ CONNEXION RAPIDE ═══════════════ -->
+<section class="section section-alt" id="acces">
+  <div class="sec-eyebrow">Accès immédiat · Évaluation</div>
+  <h2 class="sec-title">Connectez-vous en <span>1 seul clic</span></h2>
+  <p class="sec-sub">Choisissez un rôle — vous êtes connecté instantanément, sans mot de passe</p>
+  <div class="roles-grid">
+    <form method="POST" action="{{ url_for('login') }}" class="rc" style="--rcc:#ef4444">
+      <div class="rc-bar"></div><input type="hidden" name="quick_role" value="admin">
+      <div class="rc-ico">👑</div><div class="rc-badge">Admin</div>
+      <div class="rc-creds">admin / AS3admin2026</div>
+      <ul class="rc-perms">
+        <li class="y">✓ Tous les modules</li>
+        <li class="y">✓ Gestion utilisateurs</li>
+        <li class="y">✓ Export Excel</li>
+        <li class="y">✓ Panel administration</li>
+      </ul>
+      <button class="rc-btn" type="submit">Entrer Admin →</button>
+    </form>
+    <form method="POST" action="{{ url_for('login') }}" class="rc" style="--rcc:#f59e0b">
+      <div class="rc-bar"></div><input type="hidden" name="quick_role" value="manager">
+      <div class="rc-ico">📊</div><div class="rc-badge">Manager</div>
+      <div class="rc-creds">manager / Manager@2026</div>
+      <ul class="rc-perms">
+        <li class="y">✓ Tous les modules</li>
+        <li class="y">✓ Abonnements PRO</li>
+        <li class="y">✓ Export Excel</li>
+        <li class="n">✗ Panel administration</li>
+      </ul>
+      <button class="rc-btn" type="submit">Entrer Manager →</button>
+    </form>
+    <form method="POST" action="{{ url_for('login') }}" class="rc" style="--rcc:#818cf8">
+      <div class="rc-bar"></div><input type="hidden" name="quick_role" value="analyst">
+      <div class="rc-ico">🔍</div><div class="rc-badge">Analyste</div>
+      <div class="rc-creds">analyst / Analyst@2026</div>
+      <ul class="rc-perms">
+        <li class="y">✓ Tous les modules</li>
+        <li class="y">✓ Abonnements PRO</li>
+        <li class="n">✗ Export Excel</li>
+        <li class="n">✗ Panel administration</li>
+      </ul>
+      <button class="rc-btn" type="submit">Entrer Analyste →</button>
+    </form>
+    <form method="POST" action="{{ url_for('login') }}" class="rc" style="--rcc:#64748b">
+      <div class="rc-bar"></div><input type="hidden" name="quick_role" value="viewer">
+      <div class="rc-ico">👁</div><div class="rc-badge">Viewer</div>
+      <div class="rc-creds">viewer / Viewer@2026</div>
+      <ul class="rc-perms">
+        <li class="y">✓ Dashboard & analyses</li>
+        <li class="y">✓ Recherche avancée</li>
+        <li class="n">✗ Abonnements PRO</li>
+        <li class="n">✗ Export &amp; Admin</li>
+      </ul>
+      <button class="rc-btn" type="submit">Entrer Viewer →</button>
+    </form>
+  </div>
+</section>
+
+<!-- ═══════════════ MODULES ═══════════════ -->
+<section class="section">
+  <div class="sec-eyebrow">5 modules d'analyse</div>
+  <h2 class="sec-title">Exploration <span>à 360°</span></h2>
+  <p class="sec-sub" style="margin-bottom:2rem">Chaque module révèle une dimension unique des données</p>
+  <div class="mods-grid">
+    <a href="{{ url_for('login') }}" class="mod" style="--mc:#3b82f6;--mc2:#60a5fa">
+      <div class="mod-ico">👥</div><div class="mod-name">Démographie</div>
+      <div class="mod-desc">Âge, genre, pays, emploi, revenus, situation familiale</div>
+      <div class="mod-tags"><span class="mod-tag">7 graphiques</span><span class="mod-tag">50K profils</span></div>
+    </a>
+    <a href="{{ url_for('login') }}" class="mod" style="--mc:#f59e0b;--mc2:#fbbf24">
+      <div class="mod-ico">📄</div><div class="mod-name">Contenu</div>
+      <div class="mod-desc">Types, thèmes, fréquence, heatmap Genre × Contenu</div>
+      <div class="mod-tags"><span class="mod-tag">6 graphiques</span><span class="mod-tag">Heatmap</span></div>
+    </a>
+    <a href="{{ url_for('login') }}" class="mod" style="--mc:#10b981;--mc2:#34d399">
+      <div class="mod-ico">📈</div><div class="mod-name">Comportemental</div>
+      <div class="mod-desc">Followers, ancienneté, corrélations, scatter plots</div>
+      <div class="mod-tags"><span class="mod-tag">7 graphiques</span><span class="mod-tag">Scatter</span></div>
+    </a>
+    <a href="{{ url_for('login') }}" class="mod" style="--mc:#8b5cf6;--mc2:#a78bfa">
+      <div class="mod-ico">⭐</div><div class="mod-name">Abonnements</div>
+      <div class="mod-desc">Free / Premium / Business par pays et revenus</div>
+      <div class="mod-tags"><span class="mod-tag mod-tag-pro">⭐ PRO</span><span class="mod-tag">5 graphiques</span></div>
+    </a>
+    <a href="{{ url_for('login') }}" class="mod" style="--mc:#06b6d4;--mc2:#22d3ee">
+      <div class="mod-ico">🔍</div><div class="mod-name">Recherche</div>
+      <div class="mod-desc">10 filtres combinables — pays, âge, followers, thème…</div>
+      <div class="mod-tags"><span class="mod-tag">Interactif</span><span class="mod-tag">Top 100</span></div>
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════ DATASET ═══════════════ -->
+<section class="section section-alt">
+  <div class="ds-wrap">
+    <div>
+      <div class="sec-eyebrow">Dataset Instagram</div>
+      <h2 class="sec-title" style="margin-bottom:.7rem">18 variables sur <span>50 000 profils</span></h2>
+      <p style="font-size:.9rem;color:var(--t2);line-height:1.8;margin-bottom:1.2rem">
+        Dataset complet : dimensions socio-démographiques, comportementales et de contenu,
+        dans 10 pays sur la période 2010–2025.
+      </p>
+      <div class="var-cloud">
+        {% for v in ['user_id','age','gender','country','income_level','employment_status','relationship_status','has_children','weekly_work_hours','social_events_per_month','books_read_per_year','posts_created_per_week','followers_count','account_creation_year','content_type_preference','preferred_content_theme','privacy_setting_level','subscription_status'] %}
+        <span class="var-chip">{{ v }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="ds-nums">
+        <div class="ds-num" style="--nc:#3b82f6;--nc2:#8b5cf6"><div class="ds-num-v">50 000</div><div class="ds-num-l">Lignes</div></div>
+        <div class="ds-num" style="--nc:#f59e0b;--nc2:#fbbf24"><div class="ds-num-v">18</div><div class="ds-num-l">Variables</div></div>
+        <div class="ds-num" style="--nc:#10b981;--nc2:#34d399"><div class="ds-num-v">10</div><div class="ds-num-l">Pays</div></div>
+        <div class="ds-num" style="--nc:#8b5cf6;--nc2:#a78bfa"><div class="ds-num-v">15 ans</div><div class="ds-num-l">Période</div></div>
+        <div class="ds-num" style="--nc:#ec4899;--nc2:#f472b6"><div class="ds-num-v">125K</div><div class="ds-num-l">Max foll.</div></div>
+        <div class="ds-num" style="--nc:#06b6d4;--nc2:#22d3ee"><div class="ds-num-v">39 ans</div><div class="ds-num-l">Âge moy.</div></div>
+      </div>
+      <div style="background:var(--ink2);border:1px solid rgba(59,130,246,.1);border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:.6rem;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.65rem">Répartition par genre</div>
+        <svg width="100" height="100" viewBox="0 0 100 100" style="display:block;margin:0 auto .6rem">
+          <circle cx="50" cy="50" r="40" fill="rgba(59,130,246,.03)" stroke="rgba(59,130,246,.07)" stroke-width="1"/>
+          <circle cx="50" cy="50" r="32" fill="none" stroke="#ec4899" stroke-width="12"
+            stroke-dasharray="101 100" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+          <circle cx="50" cy="50" r="32" fill="none" stroke="#3b82f6" stroke-width="12"
+            stroke-dasharray="96 105" stroke-dashoffset="-101" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+          <circle cx="50" cy="50" r="32" fill="none" stroke="#fbbf24" stroke-width="12"
+            stroke-dasharray="4 197" stroke-dashoffset="-197" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+          <text x="50" y="47" text-anchor="middle" fill="#f0f6ff" font-size="9" font-weight="700" font-family="sans-serif">Genre</text>
+          <text x="50" y="59" text-anchor="middle" fill="#7ea8cc" font-size="7.5" font-family="sans-serif">50K</text>
+        </svg>
+        <div style="display:flex;justify-content:center;gap:.9rem;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--t2)"><span style="width:8px;height:8px;border-radius:50%;background:#ec4899;display:inline-block"></span>F 51%</span>
+          <span style="display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--t2)"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span>M 48%</span>
+          <span style="display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--t2)"><span style="width:8px;height:8px;border-radius:50%;background:#fbbf24;display:inline-block"></span>Autre 1%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ ÉQUIPE ═══════════════ -->
+<section class="section">
+  <div class="sec-eyebrow" style="justify-content:center">Équipe</div>
+  <h2 class="sec-title" style="text-align:center;margin-bottom:.5rem">Développé à l'<span>ENSEA</span></h2>
+  <p style="text-align:center;font-size:.88rem;color:var(--t2);margin:0 auto 2.2rem;max-width:400px">
+    Abidjan · Côte d'Ivoire · 2025–2026
+  </p>
+  <div class="team-grid">
+    <div class="tm" style="border-color:rgba(99,102,241,.2)">
+      <div class="tm-av" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">K</div>
+      <div class="tm-role" style="color:#818cf8">👑 Chef de projet</div>
+      <div class="tm-name">KABAMBA LUBANZA Dolly</div>
+      <div class="tm-desc">Architecture, développement full-stack & conception</div>
+      <a href="mailto:kabambadolly5@gmail.com" class="tm-mail">kabambadolly5@gmail.com</a>
+    </div>
+    <div class="tm">
+      <div class="tm-av" style="background:linear-gradient(135deg,#f59e0b,#ec4899)">M</div>
+      <div class="tm-role">Membre 2</div>
+      <div class="tm-name">Membre de l'équipe</div>
+      <div class="tm-desc">Analyse des données & visualisation statistique</div>
+    </div>
+    <div class="tm">
+      <div class="tm-av" style="background:linear-gradient(135deg,#06b6d4,#10b981)">M</div>
+      <div class="tm-role">Membre 3</div>
+      <div class="tm-name">Membre de l'équipe</div>
+      <div class="tm-desc">Interface utilisateur & expérience utilisateur</div>
+    </div>
+  </div>
+  <p class="team-enc">Projet encadré par <strong>Monsieur Marius</strong> · ENSEA · Année 2025–2026</p>
+</section>
+
+</div><!-- /.hp -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  function count(id,end,suffix,delay){
+    var el=document.getElementById(id); if(!el)return;
+    setTimeout(function(){
+      var dur=1100,t0=performance.now(),isF=String(end).includes('.');
+      (function tick(now){
+        var p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3),v=end*e;
+        el.textContent=(isF?v.toFixed(1):Math.floor(v).toLocaleString('fr-FR'))+(suffix||'');
+        if(p<1)requestAnimationFrame(tick);
+      })(t0);
+    },delay||0);
+  }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        var id=e.target.id;
+        if(id==='kv1')count('kv1',50000,'',0);
+        if(id==='kv2')count('kv2',18,'',80);
+        if(id==='kv3')count('kv3',10,'',160);
+        if(id==='kv4')count('kv4',25.1,'%',240);
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:0.5});
+  ['kv1','kv2','kv3','kv4'].forEach(function(id){
+    var el=document.getElementById(id); if(el)io.observe(el);
+  });
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click',function(e){
+      var t=document.querySelector(a.getAttribute('href'));
+      if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'});}
+    });
+  });
+})();
+</script>
+{% endblock %}

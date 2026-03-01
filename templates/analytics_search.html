@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Recherche · DataWave{% endblock %}
+{% block page_title %}Recherche avancée{% endblock %}
+{% block content %}
+
+<div class="page-intro"><h1>Recherche avancée</h1><p>Filtrez les 50 000 profils avec des critères combinables</p></div>
+
+<div style="display:grid;grid-template-columns:230px 1fr;gap:1rem;align-items:start">
+
+  <!-- Filtres -->
+  <div class="card-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;font-size:.8rem;font-weight:700;margin-bottom:.9rem;padding-bottom:.75rem;border-bottom:1px solid var(--brd1)">
+      <span>🔍 Filtres</span>
+      {% if filters_applied %}<a href="{{ url_for('analytics_search') }}" style="font-size:.7rem;color:var(--red)">Réinitialiser</a>{% endif %}
+    </div>
+    <form method="GET" action="{{ url_for('analytics_search') }}">
+      {% macro fselect(name, label, opts) %}
+      <div style="margin-bottom:.6rem"><label style="display:block;font-size:.7rem;font-weight:600;color:var(--t2);margin-bottom:.2rem">{{ label }}</label>
+      <select name="{{ name }}" style="width:100%;background:var(--bg2);border:1px solid var(--brd2);border-radius:7px;padding:.38rem .6rem;color:var(--txt);font-size:.79rem;font-family:inherit">
+        <option value="">Tous</option>
+        {% for o in opts %}<option value="{{ o }}" {% if current_filters.get(name)==o %}selected{% endif %}>{{ o }}</option>{% endfor %}
+      </select></div>
+      {% endmacro %}
+      {{ fselect('country','Pays',countries) }}
+      {{ fselect('gender','Genre',genders) }}
+      {{ fselect('subscription','Abonnement',subs) }}
+      {{ fselect('content','Type de contenu',contents) }}
+      {{ fselect('theme','Thème',themes) }}
+      {{ fselect('privacy','Confidentialité',privacies) }}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem">
+        <div><label style="display:block;font-size:.7rem;font-weight:600;color:var(--t2);margin-bottom:.2rem">Âge min</label><input type="number" name="age_min" value="{{ current_filters.get('age_min','') }}" min="13" max="99" style="width:100%;background:var(--bg2);border:1px solid var(--brd2);border-radius:7px;padding:.38rem .6rem;color:var(--txt);font-size:.79rem"></div>
+        <div><label style="display:block;font-size:.7rem;font-weight:600;color:var(--t2);margin-bottom:.2rem">Âge max</label><input type="number" name="age_max" value="{{ current_filters.get('age_max','') }}" min="13" max="99" style="width:100%;background:var(--bg2);border:1px solid var(--brd2);border-radius:7px;padding:.38rem .6rem;color:var(--txt);font-size:.79rem"></div>
+      </div>
+      <div style="margin-bottom:.6rem"><label style="display:block;font-size:.7rem;font-weight:600;color:var(--t2);margin-bottom:.2rem">Followers min.</label><input type="number" name="foll_min" value="{{ current_filters.get('foll_min','') }}" min="0" style="width:100%;background:var(--bg2);border:1px solid var(--brd2);border-radius:7px;padding:.38rem .6rem;color:var(--txt);font-size:.79rem"></div>
+      <div style="margin-bottom:.9rem"><label style="display:block;font-size:.7rem;font-weight:600;color:var(--t2);margin-bottom:.2rem">Trier par</label>
+        <select name="sort_by" style="width:100%;background:var(--bg2);border:1px solid var(--brd2);border-radius:7px;padding:.38rem .6rem;color:var(--txt);font-size:.79rem;font-family:inherit;margin-bottom:.4rem">
+          <option value="followers_count" {% if current_filters.get('sort_by','followers_count')=='followers_count' %}selected{% endif %}>Followers</option>
+          <option value="posts_created_per_week" {% if current_filters.get('sort_by')=='posts_created_per_week' %}selected{% endif %}>Posts/semaine</option>
+          <option value="age" {% if current_filters.get('sort_by')=='age' %}selected{% endif %}>Âge</option>
+        </select>
+        <select name="order" style="width:100%;background:var(--bg2);border:1px solid var(--brd2);border-radius:7px;padding:.38rem .6rem;color:var(--txt);font-size:.79rem;font-family:inherit">
+          <option value="desc" {% if current_filters.get('order','desc')=='desc' %}selected{% endif %}>Décroissant</option>
+          <option value="asc" {% if current_filters.get('order')=='asc' %}selected{% endif %}>Croissant</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-submit" style="font-size:.82rem;padding:.55rem">Rechercher →</button>
+    </form>
+  </div>
+
+  <!-- Résultats -->
+  <div>
+    {% if filters_applied and results is not none %}
+      <div style="background:var(--s1);border:1px solid var(--brd1);border-radius:var(--r) var(--r) 0 0;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:.85rem;font-weight:600">
+          <span style="color:var(--blue)">{{ "{:,}".format(query_info.get('total',0)).replace(',',' ') }}</span> résultats trouvés
+          {% if query_info.get('total',0) > 100 %}<span style="color:var(--t3);font-size:.75rem"> (affichage top 100)</span>{% endif %}
+        </span>
+        <span style="font-size:.76rem;color:var(--t3)">
+          Moy. followers : {{ "{:,}".format(query_info.get('avg_foll',0)).replace(',',' ') }} ·
+          Moy. posts/sem : {{ query_info.get('avg_posts',0) }}
+        </span>
+      </div>
+      {% if results %}
+      <div style="overflow-x:auto;background:var(--s1);border:1px solid var(--brd1);border-top:none;border-radius:0 0 var(--r) var(--r)">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Âge</th><th>Genre</th><th>Pays</th><th>Followers</th><th>Posts/sem</th><th>Abonnement</th><th>Thème</th><th>Confidentialité</th></tr></thead>
+          <tbody>
+          {% for r in results %}
+          <tr>
+            <td><span style="background:var(--s2);padding:2px 6px;border-radius:5px;font-size:.7rem;color:var(--t2)">#{{ r.user_id }}</span></td>
+            <td>{{ r.age }}</td>
+            <td>{{ r.gender }}</td>
+            <td><span style="background:var(--s2);padding:2px 7px;border-radius:5px;font-size:.75rem">{{ r.country }}</span></td>
+            <td><strong style="color:var(--blue)">{{ "{:,}".format(r.followers_count|int).replace(',',' ') }}</strong></td>
+            <td>{{ r.posts_created_per_week }}</td>
+            <td><span class="sub-tag sub-{{ r.subscription_status|lower }}">{{ r.subscription_status }}</span></td>
+            <td style="font-size:.78rem">{{ r.preferred_content_theme }}</td>
+            <td style="font-size:.78rem">{{ r.privacy_setting_level }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:3rem 2rem;background:var(--s1);border:1px solid var(--brd1);border-top:none;border-radius:0 0 var(--r) var(--r);color:var(--t3)">
+        <div style="font-size:2rem;margin-bottom:.75rem">🔎</div>
+        <div style="font-weight:700;color:var(--t2);margin-bottom:.4rem">Aucun résultat</div>
+        <p style="font-size:.85rem">Essayez de modifier ou de réduire vos filtres.</p>
+      </div>
+      {% endif %}
+    {% else %}
+      <div style="text-align:center;padding:4rem 2rem;background:var(--s1);border:1px solid var(--brd1);border-radius:var(--r);color:var(--t3)">
+        <div style="font-size:3rem;margin-bottom:1rem;opacity:.4">🔍</div>
+        <h3 style="font-size:1.1rem;font-weight:700;color:var(--t2);margin-bottom:.5rem">Sélectionnez vos filtres</h3>
+        <p style="font-size:.88rem;margin-bottom:1.25rem">Utilisez le panneau de gauche pour filtrer les 50 000 profils Instagram.</p>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;font-size:.75rem">
+          <span style="background:var(--s2);border:1px solid var(--brd2);padding:3px 10px;border-radius:20px;color:var(--t2)">10 pays disponibles</span>
+          <span style="background:var(--s2);border:1px solid var(--brd2);padding:3px 10px;border-radius:20px;color:var(--t2)">4 genres</span>
+          <span style="background:var(--s2);border:1px solid var(--brd2);padding:3px 10px;border-radius:20px;color:var(--t2)">3 abonnements</span>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

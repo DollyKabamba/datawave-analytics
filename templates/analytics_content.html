@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Contenu · DataWave{% endblock %}
+{% block page_title %}Module Contenu{% endblock %}
+{% block content %}
+
+<div class="page-intro"><h1>Analyse du Contenu</h1><p>Types de contenu, thèmes préférés, fréquence de publication et paramètres de confidentialité</p></div>
+
+<div class="kgrid kgrid-4" style="margin-bottom:1.25rem">
+  <div class="kcard kc-blue"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="kc-val">{{ s.get('avg_posts','—') }}</div><div class="kc-lbl">Posts moy./semaine</div></div></div>
+  <div class="kcard kc-amber"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div><div class="kc-val">{{ s.get('max_posts','—') }}</div><div class="kc-lbl">Max posts/semaine</div></div></div>
+  <div class="kcard kc-green"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><div class="kc-val">{{ s.get('public_pct','—') }}%</div><div class="kc-lbl">Profils publics</div></div></div>
+  <div class="kcard kc-purple"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><div class="kc-val">{{ s.get('private_pct','—') }}%</div><div class="kc-lbl">Profils privés</div></div></div>
+</div>
+
+<div class="cgrid cgrid-3">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Types de contenu</div></div><div style="height:200px"><canvas id="cCt" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Thèmes préférés</div></div><div style="height:200px"><canvas id="cTh" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Confidentialité</div></div><div style="height:200px"><canvas id="cPr" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Posts moyens par type de contenu</div></div><div style="height:220px"><canvas id="cPct" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Followers moyens par thème</div></div><div style="height:220px"><canvas id="cFth" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+
+<!-- Heatmap Genre × Type de contenu -->
+<div class="chart-card">
+  <div class="cc-head"><div class="cc-title">Heatmap — Posts/semaine par Genre × Type de contenu</div><div class="cc-sub">Intensité = moyenne des posts</div></div>
+  <div style="overflow-x:auto;margin-top:.5rem">
+    <table style="border-collapse:separate;border-spacing:4px;min-width:600px">
+      <thead><tr><th style="font-size:.65rem;color:var(--t3);padding:.3rem .5rem;text-align:left">Genre \ Type</th>
+      {% for col in s.get('hm_cols',[]) %}<th style="font-size:.65rem;color:var(--t3);padding:.3rem .5rem;text-align:center">{{ col }}</th>{% endfor %}
+      </tr></thead>
+      <tbody>
+      {% if s.get('hm_data') %}
+        {% set hm_max = namespace(v=0.001) %}
+        {% for row in s.hm_data %}{% for v in row %}{% if v > hm_max.v %}{% set hm_max.v = v %}{% endif %}{% endfor %}{% endfor %}
+        {% for row in s.get('hm_rows',[]) %}{% set i = loop.index0 %}
+        <tr>
+          <td style="font-size:.75rem;font-weight:600;color:var(--t2);padding:.35rem .6rem;white-space:nowrap">{{ row }}</td>
+          {% for v in s.hm_data[i] %}
+            {% set intensity = (v / hm_max.v * 0.85 + 0.05) %}
+            <td style="padding:.45rem .6rem;text-align:center;border-radius:7px;background:rgba(99,102,241,{{ '%.2f'|format(intensity) }})">
+              <span style="font-size:.68rem;font-weight:700;color:rgba(255,255,255,.85)">{{ v }}</span>
+            </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      {% endif %}
+      </tbody>
+    </table>
+    <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem;font-size:.7rem;color:var(--t3)">
+      <span>Faible</span>
+      <div style="flex:1;max-width:160px;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(99,102,241,.05),rgba(99,102,241,.9))"></div>
+      <span>Élevé</span>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:1rem">
+  <div class="chart-card">
+    <div class="cc-head"><div class="cc-title">Heatmap Genre × Type de contenu</div><div class="cc-sub">Posts moyens par combinaison</div></div>
+    <div style="height:260px"><canvas id="cHeat" style="display:block;width:100%;height:100%"></canvas></div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+  function drawCharts() {
+{% if s %}
+    DW.doughnut('cCt', {{ s.ct_labels|tojson }}, {{ s.ct_counts|tojson }});
+    DW.doughnut('cTh', {{ s.theme_labels|tojson }}, {{ s.theme_counts|tojson }});
+    DW.pie('cPr', {{ s.priv_labels|tojson }}, {{ s.priv_counts|tojson }});
+    DW.bar('cPct', {{ s.pct_labels|tojson }}, {{ s.pct_values|tojson }}, {colors:['#f59e0b']});
+    DW.bar('cFth', {{ s.fth_labels|tojson }}, {{ s.fth_values|tojson }}, {colors:['#06b6d4']});
+{% if s.hm_rows %}
+    DW.heatmap('cHeat', {{ s.hm_rows|tojson }}, {{ s.hm_cols|tojson }}, {{ s.hm_data|tojson }});
+{% endif %}
+{% endif %}
+  }
+  setTimeout(drawCharts, 300);
+  DW.register(drawCharts);
+});
+</script>
+{% endblock %}

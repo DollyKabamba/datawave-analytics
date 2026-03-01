@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · DataWave Analytics{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+{% block content %}
+
+
+<!-- KPIs -->
+<div class="kgrid kgrid-4" style="margin-bottom:1rem">
+  <div class="kcard kc-indigo"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="kc-val">{{ "{:,}".format(kpi.get('total',0)).replace(',','&nbsp;')|safe }}</div><div class="kc-lbl">Profils analysés</div></div></div>
+  <div class="kcard kc-blue"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div><div class="kc-val">{{ "{:,}".format(kpi.get('avg_followers',0)).replace(',','&nbsp;')|safe }}</div><div class="kc-lbl">Followers moyens</div></div></div>
+  <div class="kcard kc-amber"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="kc-val">{{ kpi.get('avg_posts','—') }}</div><div class="kc-lbl">Posts / semaine (moy.)</div></div></div>
+  <div class="kcard kc-green"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div><div class="kc-val">{{ kpi.get('premium_pct','—') }}%</div><div class="kc-lbl">Comptes payants</div></div></div>
+</div>
+<div class="kgrid kgrid-3" style="margin-bottom:1.25rem">
+  <div class="kcard kc-purple"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><div class="kc-val">{{ kpi.get('countries','—') }}</div><div class="kc-lbl">Pays représentés</div></div></div>
+  <div class="kcard kc-pink"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div><div class="kc-val">{{ "{:,}".format(kpi.get('max_followers',0)).replace(',','&nbsp;')|safe }}</div><div class="kc-lbl">Max followers</div></div></div>
+  <div class="kcard kc-cyan"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="kc-val">{{ kpi.get('avg_age','—') }} ans</div><div class="kc-lbl">Âge moyen</div></div></div>
+</div>
+
+<!-- Charts -->
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Genre des utilisateurs</div><div class="cc-sub">Répartition par sexe</div></div><div style="height:220px"><canvas id="cGender" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Top 10 pays</div><div class="cc-sub">Nombre de profils</div></div><div style="height:220px"><canvas id="cCountry" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-3">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Abonnements</div><div class="cc-sub">Distribution</div></div><div style="height:200px"><canvas id="cSub" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Posts par emploi</div><div class="cc-sub">Moyenne hebdomadaire</div></div><div style="height:200px"><canvas id="cEmp" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Followers par pays</div><div class="cc-sub">Top 8 pays (moyenne)</div></div><div style="height:200px"><canvas id="cFc" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+
+<!-- Shortcuts -->
+<div style="margin-top:1.5rem">
+  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:.7rem">ACCÈS RAPIDE AUX MODULES</div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem">
+    <a href="{{ url_for('analytics_demographic') }}" class="shortcut-btn">👥 Démographie</a>
+    <a href="{{ url_for('analytics_content') }}" class="shortcut-btn">📄 Contenu</a>
+    <a href="{{ url_for('analytics_behavioral') }}" class="shortcut-btn">📈 Comportemental</a>
+    <a href="{{ url_for('analytics_subscriptions') }}" class="shortcut-btn">⭐ Abonnements</a>
+    <a href="{{ url_for('analytics_search') }}" class="shortcut-btn">🔍 Recherche</a>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+  function drawCharts() {
+{% if charts %}
+    DW.doughnut('cGender', {{ charts.gender_labels|tojson }}, {{ charts.gender_counts|tojson }});
+    DW.bar('cCountry', {{ charts.country_labels|tojson }}, {{ charts.country_counts|tojson }}, {horizontal:true});
+    DW.pie('cSub', {{ charts.sub_labels|tojson }}, {{ charts.sub_counts|tojson }});
+    DW.bar('cEmp', {{ charts.emp_labels|tojson }}, {{ charts.emp_values|tojson }}, {colors:['#818cf8']});
+    DW.bar('cFc', {{ charts.fc_labels|tojson }}, {{ charts.fc_values|tojson }}, {colors:['#34d399']});
+{% endif %}
+  }
+  // Draw after layout is painted
+  setTimeout(drawCharts, 300);
+  // Also redraw on resize
+  DW.register(drawCharts);
+});
+</script>
+{% endblock %}

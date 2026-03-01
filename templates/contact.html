@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Contact · DataWave Analytics{% endblock %}
+{% block pub_content %}
+<div style="max-width:1100px;margin:0 auto;padding:3rem">
+  <div style="text-align:center;padding:2.5rem 0 2rem">
+    <h1 style="font-size:2rem;font-weight:900;margin-bottom:.5rem">Nous contacter</h1>
+    <p style="color:var(--t2)">Une question ? Envoyez-nous un message</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:1.5rem">
+    <div class="card-panel">
+      <h2 style="font-size:1.05rem;font-weight:700;margin-bottom:1.5rem">Envoyer un message</h2>
+      <form method="POST" action="{{ url_for('contact') }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="field"><label>Votre nom *</label><input type="text" name="name" placeholder="Prénom Nom" required></div>
+          <div class="field"><label>Email *</label><input type="email" name="email" placeholder="votre@email.com" required></div>
+        </div>
+        <div class="field"><label>Sujet *</label><input type="text" name="subject" placeholder="Objet de votre message" required></div>
+        <div class="field"><label>Message *</label><textarea name="message" rows="5" placeholder="Votre message..." required style="resize:vertical"></textarea></div>
+        <button type="submit" class="btn-submit" style="max-width:220px">Envoyer le message →</button>
+      </form>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <div class="card-panel">
+        <h3 style="font-size:.9rem;font-weight:700;margin-bottom:.9rem">Informations</h3>
+        <div style="display:flex;gap:.7rem;margin-bottom:.75rem"><span>📧</span><div><strong style="font-size:.8rem;display:block">Email</strong><p style="font-size:.78rem;color:var(--t2)">kabambadolly5@gmail.com</p></div></div>
+        <div style="display:flex;gap:.7rem;margin-bottom:.75rem"><span>🏫</span><div><strong style="font-size:.8rem;display:block">ENSEA</strong><p style="font-size:.78rem;color:var(--t2)">Abidjan, Côte d'Ivoire</p></div></div>
+        <div style="display:flex;gap:.7rem"><span>⏰</span><div><strong style="font-size:.8rem;display:block">Horaires</strong><p style="font-size:.78rem;color:var(--t2)">Lun–Ven, 8h–18h</p></div></div>
+      </div>
+      <div class="card-panel" style="text-align:center">
+        <p style="font-size:.85rem;color:var(--t2);margin-bottom:.75rem">Accès à la plateforme</p>
+        <a href="{{ url_for('login') }}" class="btn-submit" style="font-size:.82rem;padding:.55rem 1rem">Se connecter →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

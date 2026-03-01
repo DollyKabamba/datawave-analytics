@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Erreur · DataWave</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'Inter',sans-serif;background:#040d1a;color:#eef4ff;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:1rem;text-align:center;padding:2rem}
+    .code{font-size:7rem;font-weight:900;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+    .title{font-size:1.5rem;font-weight:700}
+    p{color:#7fa8c9;font-size:.9rem}
+    a{display:inline-flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,#3b82f6,#6366f1);color:white;padding:.6rem 1.4rem;border-radius:9px;font-weight:700;font-size:.875rem;text-decoration:none;margin-top:.5rem}
+  </style>
+</head>
+<body>
+  <div class="code">{% if error %}500{% else %}404{% endif %}</div>
+  <div class="title">{% if error %}Erreur serveur{% else %}Page introuvable{% endif %}</div>
+  <p>{% if error %}Une erreur interne s'est produite.{% else %}La page demandée n'existe pas.{% endif %}</p>
+  <a href="/">← Retour à l'accueil</a>
+</body>
+</html>
