@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Connexion · DataWave Analytics{% endblock %}
+{% block pub_content %}
+<div class="login-page">
+  <div class="login-box">
+
+    <!-- Côté gauche : connexion rapide -->
+    <div class="lb-left">
+      <div class="lb-logo">
+        <div class="lb-logo-icon"><svg width="22" height="22" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+        <div><div style="font-weight:800;font-size:.95rem">DataWave Analytics</div><div style="font-size:.62rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">ENSEA · Abidjan 2026</div></div>
+      </div>
+      <h1 class="lb-title">Plateforme d'analyse <span>Instagram</span></h1>
+      <p class="lb-desc">50 000 profils · 18 variables · 5 modules · 4 niveaux d'accès</p>
+
+      <div class="lb-quick">
+        <div class="lbq-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Connexion rapide — 1 clic
+        </div>
+        <form method="POST" action="{{ url_for('login') }}" id="qf">
+          <input type="hidden" name="quick_role" id="qr" value="">
+          <div class="lbq-grid">
+            <button type="button" class="qbtn qb-admin"   onclick="ql('admin')">  <span>👑</span><div><b>Admin</b><small>admin / AS3admin2026</small></div></button>
+            <button type="button" class="qbtn qb-manager" onclick="ql('manager')"><span>📊</span><div><b>Manager</b><small>manager / Manager@2026</small></div></button>
+            <button type="button" class="qbtn qb-analyst" onclick="ql('analyst')"><span>🔍</span><div><b>Analyste</b><small>analyst / Analyst@2026</small></div></button>
+            <button type="button" class="qbtn qb-viewer"  onclick="ql('viewer')"> <span>👁</span><div><b>Viewer</b><small>viewer / Viewer@2026</small></div></button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tableau des accès -->
+      <div class="lb-perms">
+        <div class="lbp-title">Récapitulatif des accès</div>
+        <table class="lbp-table">
+          <thead><tr><th>Rôle</th><th>Dashboard</th><th>Analyses</th><th>Abonn.</th><th>Export</th><th>Admin</th></tr></thead>
+          <tbody>
+            <tr><td><span class="rtag rt-admin">Admin</span></td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+            <tr><td><span class="rtag rt-manager">Manager</span></td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td></tr>
+            <tr><td><span class="rtag rt-analyst">Analyst</span></td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+            <tr><td><span class="rtag rt-viewer">Viewer</span></td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Côté droit : formulaire manuel -->
+    <div class="lb-right">
+      <h2>Connexion manuelle</h2>
+      <p style="color:var(--t2);font-size:.82rem;margin-bottom:1.5rem">Ou utilisez les boutons de connexion rapide à gauche</p>
+      {% if error %}<div class="form-error"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> {{ error }}</div>{% endif %}
+      <form method="POST" action="{{ url_for('login') }}">
+        <div class="field">
+          <label>Identifiant</label>
+          <div class="fi-wrap"><svg class="fi-ico" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input type="text" name="username" placeholder="admin, manager, analyst, viewer" required autofocus></div>
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <div class="fi-wrap"><svg class="fi-ico" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" name="password" placeholder="••••••••" required></div>
+        </div>
+        <button type="submit" class="btn-submit">Se connecter <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+      </form>
+      <div style="margin-top:.85rem;font-size:.78rem;color:var(--t3)">
+        Pas encore de compte ? <a href="{{ url_for('register') }}">S'inscrire</a> &nbsp;·&nbsp; <a href="{{ url_for('home') }}">← Accueil</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function ql(r) {
+  document.getElementById('qr').value = r;
+  document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('qbtn-sel'));
+  event.currentTarget.classList.add('qbtn-sel');
+  setTimeout(()=>document.getElementById('qf').submit(), 250);
+}
+</script>
+{% endblock %}

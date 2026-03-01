@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Abonnements · DataWave{% endblock %}
+{% block page_title %}Module Abonnements{% endblock %}
+{% block content %}
+
+<div class="page-intro">
+  <h1>Analyse des Abonnements</h1>
+  <p>Distribution Free / Premium / Business selon pays, revenus et emploi</p>
+  <div style="display:inline-flex;align-items:center;gap:.4rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#fbbf24;font-size:.78rem;font-weight:600;padding:.28rem .85rem;border-radius:20px;margin-top:.5rem">⭐ Module PRO — Accès Analyste, Manager et Admin</div>
+</div>
+
+<div class="kgrid kgrid-4" style="margin-bottom:1.25rem">
+  <div class="kcard kc-blue"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="kc-val">{{ s.get('free_pct','—') }}%</div><div class="kc-lbl">Comptes Free</div></div></div>
+  <div class="kcard kc-amber"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div><div class="kc-val">{{ s.get('premium_pct','—') }}%</div><div class="kc-lbl">Comptes Premium</div></div></div>
+  <div class="kcard kc-green"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><div><div class="kc-val">{{ s.get('business_pct','—') }}%</div><div class="kc-lbl">Comptes Business</div></div></div>
+  <div class="kcard kc-purple"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div><div><div class="kc-val">{{ s.get('premium_count',0)|int + s.get('business_count',0)|int }}</div><div class="kc-lbl">Total payants</div></div></div>
+</div>
+
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Distribution des abonnements</div></div><div style="height:220px"><canvas id="cSub" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Followers moyens par abonnement</div></div><div style="height:220px"><canvas id="cSf" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-1">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Abonnements par pays (Top 8)</div></div><div style="height:260px"><canvas id="cSp" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Abonnements par niveau de revenus</div></div><div style="height:240px"><canvas id="cSr" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Abonnements par statut d'emploi</div></div><div style="height:240px"><canvas id="cSe" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+  function drawCharts() {
+{% if s %}
+    DW.doughnut('cSub', {{ s.sub_labels|tojson }}, {{ s.sub_counts|tojson }});
+    DW.bar('cSf', {{ s.sf_labels|tojson }}, {{ s.sf_values|tojson }}, {colors:['#818cf8']});
+    DW.bar('cSp', {{ s.sp_countries|tojson }}, {{ s.sp_datasets[0].data|tojson }}, {colors:['#818cf8']});
+    DW.bar('cSr', {{ s.sr_incomes|tojson }}, {{ s.sr_datasets[0].data|tojson }}, {colors:['#fbbf24']});
+    DW.bar('cSe', {{ s.se_emploi|tojson }}, {{ s.se_datasets[0].data|tojson }}, {colors:['#34d399']});
+{% endif %}
+  }
+  // Draw after layout is painted
+  setTimeout(drawCharts, 300);
+  // Also redraw on resize
+  DW.register(drawCharts);
+});
+</script>
+{% endblock %}

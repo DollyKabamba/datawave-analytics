@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Administration · DataWave{% endblock %}
+{% block page_title %}Administration{% endblock %}
+{% block content %}
+
+<div class="kgrid kgrid-4" style="margin-bottom:1.25rem">
+  <div class="kcard kc-indigo"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="kc-val">{{ users|length }}</div><div class="kc-lbl">Utilisateurs</div></div></div>
+  <div class="kcard kc-amber"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><div class="kc-val">{{ contacts|length }}</div><div class="kc-lbl">Messages contact</div></div></div>
+  <div class="kcard kc-green"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div><div class="kc-val">{{ "{:,}".format(dstats.get('total',0)).replace(',','&nbsp;')|safe }}</div><div class="kc-lbl">Profils dataset</div></div></div>
+  <div class="kcard kc-purple"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><div class="kc-val">{{ dstats.get('countries','—') }}</div><div class="kc-lbl">Pays</div></div></div>
+</div>
+
+<!-- Créer utilisateur -->
+<div class="card-panel" style="margin-bottom:1.25rem">
+  <div style="font-size:.87rem;font-weight:700;margin-bottom:1.1rem;padding-bottom:.75rem;border-bottom:1px solid var(--brd1);display:flex;align-items:center;gap:.5rem">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+    Créer un utilisateur
+    {% if session.role != 'admin' %}<span style="font-size:.72rem;color:var(--t3);font-weight:400">(réservé admin)</span>{% endif %}
+  </div>
+  <form method="POST" action="{{ url_for('admin_create_user') }}">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:.85rem">
+      <div class="field"><label>Prénom *</label><input type="text" name="first_name" required placeholder="Prénom" {{ 'disabled' if session.role != 'admin' else '' }}></div>
+      <div class="field"><label>Nom *</label><input type="text" name="last_name" required placeholder="Nom" {{ 'disabled' if session.role != 'admin' else '' }}></div>
+      <div class="field"><label>Identifiant *</label><input type="text" name="username" required placeholder="username" {{ 'disabled' if session.role != 'admin' else '' }}></div>
+      <div class="field"><label>Mot de passe *</label><input type="password" name="password" required placeholder="••••••••" {{ 'disabled' if session.role != 'admin' else '' }}></div>
+      <div class="field"><label>Email</label><input type="email" name="email" placeholder="email@exemple.ci" {{ 'disabled' if session.role != 'admin' else '' }}></div>
+      <div class="field"><label>Sexe</label>
+        <select name="gender" {{ 'disabled' if session.role != 'admin' else '' }}>
+          <option value="M">Masculin</option><option value="F">Féminin</option><option value="A">Autre</option>
+        </select>
+      </div>
+      <div class="field"><label>Rôle *</label>
+        <select name="role" {{ 'disabled' if session.role != 'admin' else '' }}>
+          <option value="viewer">Viewer</option><option value="analyst">Analyst</option><option value="manager">Manager</option><option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    {% if session.role == 'admin' %}<button type="submit" class="btn-submit" style="max-width:180px;font-size:.82rem;padding:.52rem 1rem">Créer →</button>{% endif %}
+  </form>
+</div>
+
+<!-- Tableau utilisateurs -->
+<div class="card-panel" style="margin-bottom:1.25rem;padding:0;overflow:hidden">
+  <div style="font-size:.87rem;font-weight:700;padding:.9rem 1.25rem;border-bottom:1px solid var(--brd1);background:var(--s2);display:flex;align-items:center;gap:.5rem">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    Utilisateurs ({{ users|length }})
+  </div>
+  <div style="overflow-x:auto">
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Identifiant</th><th>Nom complet</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr style="{{ 'opacity:.5' if not u['is_active'] else '' }}">
+          <td><span style="background:var(--s2);padding:2px 6px;border-radius:5px;font-size:.7rem;color:var(--t2)">#{{ u['id'] }}</span></td>
+          <td><strong>{{ u['username'] }}</strong></td>
+          <td>{{ u['first_name'] }} {{ u['last_name'] }}</td>
+          <td style="font-size:.78rem">{{ u['email'] or '—' }}</td>
+          <td><span class="rtag rt-{{ u['role'] }}">{{ u['role'] }}</span></td>
+          <td><span style="font-size:.75rem;font-weight:600;color:{{ '#34d399' if u['is_active'] else 'var(--t3)' }}">{{ '● Actif' if u['is_active'] else '● Inactif' }}</span></td>
+          <td style="font-size:.78rem">{{ u['created_at'][:10] if u['created_at'] else '—' }}</td>
+          <td>
+            {% if u['id'] != session.user_id and session.role == 'admin' %}
+            <div style="display:flex;gap:.4rem">
+              <form method="POST" action="{{ url_for('admin_toggle_user', uid=u['id']) }}" style="display:inline">
+                <button class="act-btn" title="{{ 'Désactiver' if u['is_active'] else 'Activer' }}" style="color:{{ '#fbbf24' if u['is_active'] else '#34d399' }};border-color:{{ 'rgba(251,191,36,.2)' if u['is_active'] else 'rgba(52,211,153,.2)' }}">{{ '⏸' if u['is_active'] else '▶' }}</button>
+              </form>
+              <form method="POST" action="{{ url_for('admin_delete_user', uid=u['id']) }}" style="display:inline" onsubmit="return confirm('Supprimer « {{ u['username'] }} » ?')">
+                <button class="act-btn" style="color:var(--red);border-color:rgba(239,68,68,.2)" title="Supprimer">🗑</button>
+              </form>
+            </div>
+            {% elif u['id'] == session.user_id %}
+            <span style="font-size:.72rem;color:var(--t3)">Vous</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Historique recherches -->
+{% if searches %}
+<div class="card-panel" style="margin-bottom:1.25rem;padding:0;overflow:hidden">
+  <div style="font-size:.87rem;font-weight:700;padding:.9rem 1.25rem;border-bottom:1px solid var(--brd1);background:var(--s2)">🔍 Historique des recherches (20 dernières)</div>
+  <div style="overflow-x:auto"><table class="data-table">
+    <thead><tr><th>Utilisateur</th><th>Requête</th><th>Résultats</th><th>Date</th></tr></thead>
+    <tbody>
+    {% for s in searches %}
+    <tr><td><strong>{{ s['username'] or '—' }}</strong></td>
+    <td><code style="background:var(--s2);padding:2px 7px;border-radius:5px;font-size:.7rem;color:var(--blue)">{{ s['query'][:80] }}{{ '…' if s['query']|length > 80 else '' }}</code></td>
+    <td><span style="background:var(--s2);padding:2px 7px;border-radius:6px;font-size:.72rem;color:var(--t2)">{{ "{:,}".format(s['results']).replace(',',' ') }}</span></td>
+    <td style="font-size:.77rem">{{ s['created_at'][:16] if s['created_at'] else '—' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endif %}
+
+<!-- Messages contact -->
+<div class="card-panel" style="padding:0;overflow:hidden">
+  <div style="font-size:.87rem;font-weight:700;padding:.9rem 1.25rem;border-bottom:1px solid var(--brd1);background:var(--s2)">📩 Messages de contact ({{ contacts|length }})</div>
+  {% if contacts %}
+  <div style="overflow-x:auto"><table class="data-table">
+    <thead><tr><th>Lu</th><th>Nom</th><th>Email</th><th>Sujet</th><th>Message</th><th>Date</th><th></th></tr></thead>
+    <tbody>
+    {% for c in contacts %}
+    <tr style="{{ 'font-weight:600' if not c['is_read'] else '' }}">
+      <td>{{ '✓' if c['is_read'] else '🔵' }}</td>
+      <td><strong>{{ c['name'] }}</strong></td>
+      <td style="font-size:.78rem">{{ c['email'] }}</td>
+      <td style="font-size:.78rem">{{ c['subject'] }}</td>
+      <td style="font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c['message'][:70] }}{{ '…' if c['message']|length > 70 else '' }}</td>
+      <td style="font-size:.77rem">{{ c['created_at'][:16] if c['created_at'] else '—' }}</td>
+      <td>{% if not c['is_read'] %}<form method="POST" action="{{ url_for('admin_mark_read', cid=c['id']) }}" style="display:inline"><button class="act-btn" style="color:#34d399;border-color:rgba(52,211,153,.2)" title="Marquer lu">✓</button></form>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div style="padding:1.5rem;text-align:center;color:var(--t3);font-size:.88rem">Aucun message reçu.</div>
+  {% endif %}
+</div>
+
+{% endblock %}

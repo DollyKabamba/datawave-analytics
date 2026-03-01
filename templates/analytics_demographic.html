@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Démographie · DataWave{% endblock %}
+{% block page_title %}Module Démographie{% endblock %}
+{% block content %}
+
+<div class="page-intro"><h1>Analyse Démographique</h1><p>Répartition par âge, genre, pays, emploi, revenus et situation familiale</p></div>
+
+<div class="kgrid kgrid-4" style="margin-bottom:1.25rem">
+  <div class="kcard kc-blue"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="kc-val">{{ s.get('avg_age','—') }}</div><div class="kc-lbl">Âge moyen</div></div></div>
+  <div class="kcard kc-amber"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><div><div class="kc-val">{{ s.get('avg_hours','—') }}h</div><div class="kc-lbl">Heures travail/sem.</div></div></div>
+  <div class="kcard kc-green"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="kc-val">{{ s.get('avg_events','—') }}</div><div class="kc-lbl">Évén. sociaux/mois</div></div></div>
+  <div class="kcard kc-purple"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div><div class="kc-val">{{ s.get('avg_books','—') }}</div><div class="kc-lbl">Livres lus/an</div></div></div>
+</div>
+
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Distribution par âge</div></div><div style="height:220px"><canvas id="cAge" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Répartition par genre</div></div><div style="height:220px"><canvas id="cGen" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Top 10 pays</div></div><div style="height:220px"><canvas id="cCou" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Statut d'emploi</div></div><div style="height:220px"><canvas id="cEmp" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-3">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Situation relationnelle</div></div><div style="height:200px"><canvas id="cRel" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Niveaux de revenus</div></div><div style="height:200px"><canvas id="cInc" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Enfants à charge</div></div><div style="height:200px"><canvas id="cCh" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+  function drawCharts() {
+{% if s %}
+    DW.bar('cAge', {{ s.age_labels|tojson }}, {{ s.age_counts|tojson }}, {colors:['#818cf8']});
+    DW.doughnut('cGen', {{ s.gen_labels|tojson }}, {{ s.gen_counts|tojson }});
+    DW.bar('cCou', {{ s.country_labels|tojson }}, {{ s.country_counts|tojson }}, {horizontal:true});
+    DW.bar('cEmp', {{ s.emp_labels|tojson }}, {{ s.emp_counts|tojson }}, {colors:['#34d399']});
+    DW.doughnut('cRel', {{ s.rel_labels|tojson }}, {{ s.rel_counts|tojson }});
+    DW.bar('cInc', {{ s.inc_labels|tojson }}, {{ s.inc_counts|tojson }}, {colors:['#fbbf24']});
+    DW.pie('cCh', {{ s.ch_labels|tojson }}, {{ s.ch_counts|tojson }});
+{% endif %}
+  }
+  // Draw after layout is painted
+  setTimeout(drawCharts, 300);
+  // Also redraw on resize
+  DW.register(drawCharts);
+});
+</script>
+{% endblock %}

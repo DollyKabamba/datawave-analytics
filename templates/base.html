@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DataWave Analytics{% endblock %}</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{background:#040d1a}
+    body{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,system-ui,sans-serif;background:#040d1a;color:#eef4ff;min-height:100vh}
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script>
+/* ── DW CHARTS — zero-dependency canvas renderer ── */
+(function(w){"use strict";
+var DW={};
+var PAL=['#818cf8','#fbbf24','#34d399','#f87171','#60a5fa','#a78bfa','#f472b6','#22d3ee','#fb923c','#a3e635'];
+var BG='#0c1a2e',GRID='rgba(99,160,255,.08)',TXT='#7ea8cc',TXT2='#eef4ff';
+
+/* ── Canvas sizing ── */
+function ctx(id){
+  var el=document.getElementById(id);if(!el)return null;
+  var wrapper=el.parentElement,ref=wrapper,W=0,tries=0;
+  while(ref&&tries<8){W=ref.clientWidth||ref.offsetWidth;if(W>50)break;ref=ref.parentElement;tries++;}
+  var H=wrapper.clientHeight||wrapper.offsetHeight||220;
+  if(W<50)W=700;if(H<50)H=220;
+  el.width=Math.round(W);el.height=Math.round(H);
+  return el.getContext('2d');
+}
+
+/* ── Text helper ── */
+function rText(cx,text,x,y,col,size,align){
+  cx.fillStyle=col||TXT;cx.font='600 '+(size||11)+'px system-ui,sans-serif';
+  cx.textAlign=align||'left';cx.fillText(String(text),x,y);
+}
+
+/* ── Easing ── */
+function easeOut(t){return 1-Math.pow(1-t,3);}
+function easeSpring(t){return t<.5?4*t*t*t:.5*Math.pow(2*t-2,3)+1;}
+
+/* ══ BAR CHART (animated) ══ */
+DW.bar=function(id,labels,data,opts){
+  opts=opts||{};var cx=ctx(id);if(!cx)return;
+  var W=cx.canvas.width,H=cx.canvas.height,colors=opts.colors||PAL,horiz=opts.horizontal;
+  var pad={t:20,r:16,b:horiz?52:50,l:horiz?110:46};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  var maxV=Math.max.apply(null,data)*1.15||1;
+  var dur=750,t0=performance.now();
+
+  function draw(now){
+    var prog=Math.min((now-t0)/dur,1),ease=easeOut(prog);
+    cx.clearRect(0,0,W,H);
+    /* grid lines */
+    for(var g=0;g<=4;g++){
+      var gy=pad.t+ch*(1-g/4);
+      cx.strokeStyle=GRID;cx.lineWidth=1;
+      cx.beginPath();cx.moveTo(pad.l,gy);cx.lineTo(pad.l+cw,gy);cx.stroke();
+      if(!horiz){
+        var gv=maxV*g/4;
+        rText(cx,gv>=1000?(gv/1000).toFixed(gv>=10000?0:1)+'K':Math.round(gv),pad.l-4,gy+4,TXT,9,'right');
+      }
+    }
+    if(horiz){
+      var bH=Math.min(22,ch/labels.length-5),gap=(ch-bH*labels.length)/(labels.length+1);
+      labels.forEach(function(lbl,i){
+        var y=pad.t+gap*(i+1)+bH*i,bW=(data[i]/maxV)*cw*ease;
+        var c=colors[i%colors.length];
+        /* gradient */
+        var grd=cx.createLinearGradient(pad.l,0,pad.l+bW,0);
+        grd.addColorStop(0,c);grd.addColorStop(1,c+'cc');
+        cx.fillStyle=grd;
+        cx.beginPath();cx.roundRect(pad.l,y,Math.max(2,bW),bH,3);cx.fill();
+        rText(cx,lbl.length>15?lbl.slice(0,14)+'…':lbl,pad.l-6,y+bH/2+4,TXT,9.5,'right');
+        if(prog>.4)rText(cx,Math.round(data[i]).toLocaleString('fr'),pad.l+bW+5,y+bH/2+4,TXT2,9);
+      });
+    } else {
+      var n=labels.length,bW2=Math.min(40,cw/n-4),gap2=(cw-bW2*n)/(n+1);
+      labels.forEach(function(lbl,i){
+        var x=pad.l+gap2*(i+1)+bW2*i,fullH=(data[i]/maxV)*ch,bH2=fullH*ease;
+        var c=colors[i%colors.length];
+        var grd=cx.createLinearGradient(0,pad.t+ch-fullH,0,pad.t+ch);
+        grd.addColorStop(0,c);grd.addColorStop(1,c+'55');
+        cx.fillStyle=grd;
+        cx.beginPath();cx.roundRect(x,pad.t+ch-bH2,bW2,Math.max(2,bH2),3);cx.fill();
+        cx.save();cx.translate(x+bW2/2,pad.t+ch+10);
+        if(lbl.length>7)cx.rotate(-0.45);
+        rText(cx,lbl.length>12?lbl.slice(0,11)+'…':lbl,0,0,TXT,9,'center');
+        cx.restore();
+      });
+    }
+    if(prog<1)requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+};
+
+/* ══ DOUGHNUT (animated arc sweep) ══ */
+DW.doughnut=function(id,labels,data,opts){
+  opts=opts||{};var cx=ctx(id);if(!cx)return;
+  var W=cx.canvas.width,H=cx.canvas.height,colors=opts.colors||PAL;
+  var total=data.reduce(function(a,b){return a+b;},0)||1;
+  var legW=Math.min(170,W*.42),chartW=W-legW;
+  var cx2=chartW/2,cy=H/2,r=Math.min(cx2,cy)*.84,inner=r*.6;
+  var dur=900,t0=performance.now();
+
+  function draw(now){
+    var prog=Math.min((now-t0)/dur,1),ease=easeSpring(Math.min(prog/.85,1));
+    cx.clearRect(0,0,W,H);
+    var angle=-Math.PI/2,full=2*Math.PI*ease;
+    data.forEach(function(v,i){
+      var sweep=2*Math.PI*v/total,drawSweep=Math.min(sweep,full);
+      if(drawSweep<=0)return;
+      cx.beginPath();cx.moveTo(cx2,cy);
+      cx.arc(cx2,cy,r,angle,angle+drawSweep);cx.closePath();
+      cx.fillStyle=colors[i%colors.length];cx.fill();
+      full-=drawSweep;angle+=sweep;
+    });
+    /* inner hole */
+    cx.beginPath();cx.arc(cx2,cy,inner,0,2*Math.PI);
+    cx.fillStyle=BG;cx.fill();
+    /* center text */
+    rText(cx,Math.round(total/1000)+'K',cx2,cy+5,TXT2,13,'center');
+    rText(cx,'total',cx2,cy+17,TXT,8,'center');
+    /* legend */
+    if(prog>.3){
+      var legAlpha=Math.min((prog-.3)/.4,1);
+      cx.globalAlpha=legAlpha;
+      var ly=cy-labels.length*13+6;
+      labels.forEach(function(lbl,i){
+        var pct=Math.round(data[i]/total*100);
+        cx.fillStyle=colors[i%colors.length];
+        cx.beginPath();cx.arc(chartW+11,ly+i*26+5,5,0,2*Math.PI);cx.fill();
+        rText(cx,lbl.slice(0,15),chartW+21,ly+i*26+10,TXT,9.5);
+        rText(cx,pct+'%',W-4,ly+i*26+10,TXT2,9.5,'right');
+      });
+      cx.globalAlpha=1;
+    }
+    if(prog<1)requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+};
+
+/* ══ PIE ══ */
+DW.pie=function(id,labels,data,opts){opts=opts||{};opts._pie=true;DW.doughnut(id,labels,data,opts);};
+
+/* ══ LINE CHART (animated draw-on) ══ */
+DW.line=function(id,labels,data,opts){
+  opts=opts||{};var cx=ctx(id);if(!cx)return;
+  var W=cx.canvas.width,H=cx.canvas.height,color=opts.color||PAL[0];
+  var pad={t:20,r:20,b:44,l:46};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  var maxV=Math.max.apply(null,data)*1.2||1,minV=0;
+  var n=data.length;
+  var dur=1000,t0=performance.now();
+  function px(i){return pad.l+i/(n-1)*cw;}
+  function py(v){return pad.t+ch-(v-minV)/(maxV-minV)*ch;}
+
+  function draw(now){
+    var prog=Math.min((now-t0)/dur,1),ease=easeOut(prog);
+    cx.clearRect(0,0,W,H);
+    /* grid */
+    for(var g=0;g<=4;g++){
+      var gy=pad.t+ch*(1-g/4);
+      cx.strokeStyle=GRID;cx.lineWidth=1;cx.beginPath();cx.moveTo(pad.l,gy);cx.lineTo(pad.l+cw,gy);cx.stroke();
+      rText(cx,Math.round(maxV*g/4),pad.l-4,gy+4,TXT,9,'right');
+    }
+    /* area fill */
+    var cutIdx=Math.floor((n-1)*ease);
+    cx.beginPath();cx.moveTo(px(0),py(data[0]));
+    for(var i=1;i<=cutIdx;i++)cx.lineTo(px(i),py(data[i]));
+    if(cutIdx<n-1){
+      var frac=(n-1)*ease-cutIdx;
+      cx.lineTo(px(cutIdx)+frac*(px(cutIdx+1)-px(cutIdx)),
+                py(data[cutIdx])+frac*(py(data[cutIdx+1])-py(data[cutIdx])));
+    }
+    var lastX=cutIdx<n-1?px(cutIdx)+(n-1)*ease%1*(px(cutIdx+1)-px(cutIdx)):px(n-1);
+    cx.lineTo(lastX,pad.t+ch);cx.lineTo(px(0),pad.t+ch);cx.closePath();
+    var aGrd=cx.createLinearGradient(0,pad.t,0,pad.t+ch);
+    aGrd.addColorStop(0,color+'44');aGrd.addColorStop(1,color+'00');
+    cx.fillStyle=aGrd;cx.fill();
+    /* line */
+    cx.beginPath();cx.strokeStyle=color;cx.lineWidth=2.2;cx.lineJoin='round';cx.lineCap='round';
+    cx.moveTo(px(0),py(data[0]));
+    for(var j=1;j<=cutIdx;j++)cx.lineTo(px(j),py(data[j]));
+    if(cutIdx<n-1){
+      var fr=(n-1)*ease-cutIdx;
+      cx.lineTo(px(cutIdx)+fr*(px(cutIdx+1)-px(cutIdx)),
+                py(data[cutIdx])+fr*(py(data[cutIdx+1])-py(data[cutIdx])));
+    }
+    cx.stroke();
+    /* dots */
+    for(var k=0;k<=cutIdx;k++){
+      cx.beginPath();cx.arc(px(k),py(data[k]),3.5,0,2*Math.PI);
+      cx.fillStyle=color;cx.fill();
+      cx.beginPath();cx.arc(px(k),py(data[k]),2,0,2*Math.PI);
+      cx.fillStyle=BG;cx.fill();
+    }
+    /* x labels */
+    labels.forEach(function(lbl,i){
+      cx.save();cx.translate(px(i),pad.t+ch+11);
+      if(labels.length>8&&lbl.length>3)cx.rotate(-0.4);
+      rText(cx,lbl.length>10?lbl.slice(0,9)+'…':lbl,0,0,TXT,9,'center');
+      cx.restore();
+    });
+    if(prog<1)requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+};
+
+/* ══ SCATTER (animated pop-in) ══ */
+DW.scatter=function(id,points,opts){
+  opts=opts||{};var cx=ctx(id);if(!cx)return;
+  var W=cx.canvas.width,H=cx.canvas.height,color=(opts.colors&&opts.colors[0])||PAL[0];
+  var xs=points.map(function(p){return p[0];}),ys=points.map(function(p){return p[1];});
+  var xMin=Math.min.apply(null,xs),xMax=Math.max.apply(null,xs);
+  var yMin=Math.min.apply(null,ys),yMax=Math.max.apply(null,ys);
+  var pad={t:16,r:16,b:36,l:46};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  function mapX(v){return pad.l+(v-xMin)/(xMax-xMin||1)*cw;}
+  function mapY(v){return pad.t+ch-(v-yMin)/(yMax-yMin||1)*ch;}
+  var dur=800,t0=performance.now();
+
+  function draw(now){
+    var prog=Math.min((now-t0)/dur,1),ease=easeOut(prog);
+    cx.clearRect(0,0,W,H);
+    /* grid */
+    for(var g=0;g<=4;g++){
+      var gy=pad.t+ch*(1-g/4);
+      cx.strokeStyle=GRID;cx.lineWidth=1;cx.beginPath();cx.moveTo(pad.l,gy);cx.lineTo(pad.l+cw,gy);cx.stroke();
+      rText(cx,Math.round(yMin+(yMax-yMin)*g/4),pad.l-4,gy+4,TXT,9,'right');
+    }
+    /* points with staggered pop-in */
+    var visible=Math.floor(points.length*ease);
+    for(var i=0;i<visible;i++){
+      var alpha=Math.min(1,(visible-i)/3+.3);
+      cx.globalAlpha=Math.min(alpha,.7);
+      cx.beginPath();cx.arc(mapX(points[i][0]),mapY(points[i][1]),3.5,0,2*Math.PI);
+      cx.fillStyle=color;cx.fill();
+    }
+    cx.globalAlpha=1;
+    if(prog<1)requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+};
+
+/* ══ HEATMAP (animated fade-in cells) ══ */
+DW.heatmap=function(id,rows,cols,data,opts){
+  opts=opts||{};var cx=ctx(id);if(!cx)return;
+  var W=cx.canvas.width,H=cx.canvas.height;
+  var labelW=90,labelH=28,cw=(W-labelW)/cols.length,ch=(H-labelH)/rows.length;
+  var flat=data.reduce(function(a,b){return a.concat(b);});
+  var maxV=Math.max.apply(null,flat)||1;
+  var dur=900,t0=performance.now();
+  var COLOR=[79,70,229]; /* indigo */
+
+  function draw(now){
+    var prog=Math.min((now-t0)/dur,1),ease=easeOut(prog);
+    cx.clearRect(0,0,W,H);
+    /* headers */
+    cols.forEach(function(c,j){
+      cx.save();cx.translate(labelW+(j+.5)*cw,labelH-6);cx.rotate(-0.3);
+      rText(cx,c.length>10?c.slice(0,9):c,0,0,TXT,8.5,'center');cx.restore();
+    });
+    rows.forEach(function(r,i){
+      rText(cx,r.length>12?r.slice(0,11)+'…':r,labelW-4,(i+.5)*ch+labelH+5,TXT,9,'right');
+      cols.forEach(function(_c,j){
+        var v=data[i][j],intensity=(v/maxV*.8+.05)*ease;
+        cx.fillStyle='rgba('+COLOR[0]+','+COLOR[1]+','+COLOR[2]+','+intensity.toFixed(2)+')';
+        cx.beginPath();cx.roundRect(labelW+j*cw+1,labelH+i*ch+1,cw-2,ch-2,4);cx.fill();
+        if(ease>.5){
+          cx.globalAlpha=Math.min((ease-.5)*2,1);
+          rText(cx,Math.round(v),labelW+(j+.5)*cw,(i+.5)*ch+labelH+5,
+            intensity>.4?TXT2:TXT,9,'center');
+          cx.globalAlpha=1;
+        }
+      });
+    });
+    if(prog<1)requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+};
+
+/* ── Resize redraw registry ── */
+w._dwJobs=[];
+DW.register=function(fn){w._dwJobs.push(fn);};
+w.addEventListener('resize',function(){
+  clearTimeout(w._dwResizeT);
+  w._dwResizeT=setTimeout(function(){w._dwJobs.forEach(function(f){f();});},200);
+});
+
+w.DW=DW;
+})(window);
+</script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{{ 'app-body' if session.user_id else 'pub-body' }}">
+
+{% if session.user_id %}
+{# ═══════════════════════ APP LAYOUT ═══════════════════════ #}
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo"><svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <div><div class="sb-name">DataWave</div><div class="sb-sub">Analytics · ENSEA 2026</div></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">PRINCIPAL</div>
+    <a href="{{ url_for('dashboard') }}" class="sb-link {% if request.endpoint=='dashboard' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      Tableau de bord
+    </a>
+    <div class="sb-sec">MODULES D'ANALYSE</div>
+    <a href="{{ url_for('analytics_demographic') }}" class="sb-link {% if request.endpoint=='analytics_demographic' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Démographie
+    </a>
+    <a href="{{ url_for('analytics_content') }}" class="sb-link {% if request.endpoint=='analytics_content' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Contenu
+    </a>
+    <a href="{{ url_for('analytics_behavioral') }}" class="sb-link {% if request.endpoint=='analytics_behavioral' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Comportemental
+    </a>
+    <a href="{{ url_for('analytics_subscriptions') }}" class="sb-link {% if request.endpoint=='analytics_subscriptions' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Abonnements
+      {% if session.role in ['admin','manager','analyst'] %}<span class="sb-pro">PRO</span>{% endif %}
+    </a>
+    <a href="{{ url_for('analytics_search') }}" class="sb-link {% if request.endpoint=='analytics_search' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Recherche avancée
+    </a>
+    <div class="sb-sec">OUTILS</div>
+    {% if session.role in ['admin','manager'] %}
+    <a href="{{ url_for('export_excel') }}" class="sb-link sb-link-green">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export Excel
+    </a>
+    {% endif %}
+    <a href="{{ url_for('admin_panel') }}" class="sb-link {% if request.endpoint=='admin_panel' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Administration
+    </a>
+    <div class="sb-sec">NAVIGATION</div>
+    <a href="{{ url_for('home') }}" class="sb-link">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Accueil public
+    </a>
+    <a href="{{ url_for('contact') }}" class="sb-link">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Contact
+    </a>
+  </nav>
+  <a href="{{ url_for('profile') }}" class="sb-user" style="text-decoration:none">
+    <div class="sb-av">{{ (session.first_name or '?')[0]|upper }}</div>
+    <div class="sb-uinfo">
+      <div class="sb-uname">{{ session.first_name }} {{ session.last_name }}</div>
+      <div class="rtag rt-{{ session.role }}">{{ session.role|upper }}</div>
+    </div>
+  </a>
+</aside>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="burger" onclick="document.getElementById('sidebar').classList.toggle('open')" type="button">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="tb-title">{% block page_title %}DataWave Analytics{% endblock %}</span>
+    <div class="tb-right">
+      <span class="rtag rt-{{ session.role }}">{{ session.role|upper }}</span>
+      <span class="tb-date" id="tb-date"></span>
+      <a href="{{ url_for('logout') }}" class="tb-logout" title="Se déconnecter">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Déconnexion
+      </a>
+    </div>
+  </header>
+  <div class="flash-bar">
+    {% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="flash flash-{{ cat }}"><span>{{ msg }}</span><button onclick="this.parentElement.remove()" type="button">×</button></div>
+    {% endfor %}
+  </div>
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+{% else %}
+{# ═══════════════════════ PUBLIC LAYOUT ═══════════════════════ #}
+<nav class="pub-nav">
+  <div class="pub-nav-inner">
+  <a href="{{ url_for('home') }}" class="pub-brand">
+    <div class="pub-logo"><svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <span class="pub-brand-name">DataWave</span>
+    <span class="pub-brand-tag">Analytics</span>
+  </a>
+  <div class="pub-links">
+    <a href="{{ url_for('home') }}"    class="pub-link {% if request.endpoint=='home' %}pub-link-on{% endif %}">Accueil</a>
+    <a href="{{ url_for('contact') }}" class="pub-link {% if request.endpoint=='contact' %}pub-link-on{% endif %}">Contact</a>
+    <a href="{{ url_for('register') }}" class="pub-link {% if request.endpoint=='register' %}pub-link-on{% endif %}">S'inscrire</a>
+    <a href="{{ url_for('login') }}" class="pub-cta">Se connecter →</a>
+  </div>
+  </div><!-- pub-nav-inner -->
+</nav>
+<div class="pub-flashes">
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="flash flash-{{ cat }}"><span>{{ msg }}</span><button onclick="this.parentElement.remove()" type="button">×</button></div>
+  {% endfor %}
+</div>
+<main class="pub-content">
+  {% block pub_content %}{% endblock %}
+</main>
+<footer class="pub-footer">
+  <div class="pf-inner">
+    <div><div class="pf-title">🌊 DataWave Analytics</div><div class="pf-school">ENSEA — Abidjan · Côte d'Ivoire</div></div>
+    <div class="pf-team">
+      <div><span class="pf-role">Chef de projet :</span> <strong>KABAMBA LUBANZA Dolly</strong></div>
+      <div><span class="pf-role">Membres :</span> Membre 2 · Membre 3</div>
+      <div><span class="pf-role">Encadrant :</span> <strong>Monsieur Marius</strong> · 2025–2026</div>
+    </div>
+  </div>
+</footer>
+{% endif %}
+
+<script>
+var _d=document.getElementById('tb-date');
+if(_d)_d.textContent=new Date().toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+document.addEventListener('click',function(e){
+  var sb=document.getElementById('sidebar');
+  if(sb&&sb.classList.contains('open')&&!sb.contains(e.target))sb.classList.remove('open');
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

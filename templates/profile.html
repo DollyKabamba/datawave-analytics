@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil · DataWave{% endblock %}
+{% block page_title %}Mon profil{% endblock %}
+{% block content %}
+
+<div style="display:grid;grid-template-columns:250px 1fr;gap:1.25rem">
+  <!-- Carte info -->
+  <div class="card-panel" style="align-self:start;overflow:hidden;padding:0">
+    <div style="padding:2rem 1.5rem;text-align:center;background:linear-gradient(180deg,rgba(99,102,241,.05),transparent);border-bottom:1px solid var(--brd1)">
+      {% if user['photo'] and user['photo'] != 'default.png' %}
+      <img src="{{ url_for('static', filename='uploads/' + user['photo']) }}" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid var(--indigo);margin-bottom:.75rem">
+      {% else %}
+      <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:900;color:white;margin:0 auto .75rem">{{ (user['first_name'] or '?')[0]|upper }}</div>
+      {% endif %}
+      <div style="font-weight:700;font-size:.95rem;margin-bottom:.4rem">{{ user['first_name'] }} {{ user['last_name'] }}</div>
+      <span class="rtag rt-{{ user['role'] }}">{{ user['role']|upper }}</span>
+    </div>
+    <div>
+      {% for label, val in [('Identifiant', user['username']), ('Email', user['email'] or '—'), ('Inscrit le', user['created_at'][:10] if user['created_at'] else '—')] %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 1.25rem;border-bottom:1px solid var(--brd1);font-size:.79rem">
+        <span style="color:var(--t3)">{{ label }}</span>
+        <strong style="color:var(--txt)">{{ val }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="padding:.9rem 1.25rem;border-top:1px solid var(--brd1)">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:.5rem">Mes accès</div>
+      {% for lbl, ok in [('Dashboard', True), ('Démographie', True), ('Contenu', True), ('Comportemental', True), ('Abonnements', user['role'] in ['admin','manager','analyst']), ('Export Excel', user['role'] in ['admin','manager']), ('Administration', user['role'] == 'admin')] %}
+      <div style="font-size:.78rem;padding:.15rem 0;color:{{ '#34d399' if ok else 'var(--t3)' }}">{{ '✓' if ok else '✗' }} {{ lbl }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Formulaire édition -->
+  <div class="card-panel">
+    <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem">Modifier mon profil</h2>
+    <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field"><label>Prénom</label><input type="text" name="first_name" value="{{ user['first_name'] or '' }}" required></div>
+        <div class="field"><label>Nom</label><input type="text" name="last_name" value="{{ user['last_name'] or '' }}" required></div>
+      </div>
+      <div class="field"><label>Email</label><input type="email" name="email" value="{{ user['email'] or '' }}" placeholder="votre@email.com"></div>
+      <div class="field">
+        <label>Sexe</label>
+        <select name="gender">
+          <option value="">—</option>
+          <option value="M" {{ 'selected' if user['gender']=='M' else '' }}>Masculin</option>
+          <option value="F" {{ 'selected' if user['gender']=='F' else '' }}>Féminin</option>
+          <option value="A" {{ 'selected' if user['gender']=='A' else '' }}>Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Photo de profil</label>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <input type="file" name="photo" id="pf" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+          <label for="pf" style="display:inline-flex;align-items:center;gap:.4rem;background:var(--s2);border:1px solid var(--brd2);border-radius:8px;padding:.42rem .9rem;cursor:pointer;font-size:.8rem;font-weight:500;color:var(--t2)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Choisir une image
+          </label>
+          <span id="pfn" style="font-size:.78rem;color:var(--t3)">JPG, PNG, max 5 Mo</span>
+        </div>
+        <div id="pfp" style="display:none;margin-top:.75rem"><img id="pfimg" src="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--indigo)"></div>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:.5rem">
+        <button type="submit" class="btn-submit" style="max-width:200px">Sauvegarder →</button>
+        <a href="{{ url_for('dashboard') }}" class="btn-ghost-link">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+function previewPhoto(input) {
+  if (input.files[0]) {
+    document.getElementById('pfn').textContent = input.files[0].name;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('pfimg').src = e.target.result; document.getElementById('pfp').style.display='block'; };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

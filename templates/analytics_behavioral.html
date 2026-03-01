@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Comportemental · DataWave{% endblock %}
+{% block page_title %}Module Comportemental{% endblock %}
+{% block content %}
+
+<div class="page-intro"><h1>Analyse Comportementale</h1><p>Followers, corrélations, tendances temporelles et comportements des utilisateurs</p></div>
+
+<div class="kgrid kgrid-4" style="margin-bottom:1.25rem">
+  <div class="kcard kc-indigo"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="kc-val">{{ "{:,}".format(s.get('avg_foll',0)).replace(',','&nbsp;')|safe }}</div><div class="kc-lbl">Followers moyens</div></div></div>
+  <div class="kcard kc-blue"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div><div class="kc-val">{{ "{:,}".format(s.get('med_foll',0)).replace(',','&nbsp;')|safe }}</div><div class="kc-lbl">Médiane followers</div></div></div>
+  <div class="kcard kc-pink"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div><div class="kc-val">{{ "{:,}".format(s.get('max_foll',0)).replace(',','&nbsp;')|safe }}</div><div class="kc-lbl">Max followers</div></div></div>
+  <div class="kcard kc-green"><div class="kc-ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="kc-val">{{ s.get('avg_events','—') }}</div><div class="kc-lbl">Évén. sociaux/mois</div></div></div>
+</div>
+
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Distribution des followers</div><div class="cc-sub">Par tranches</div></div><div style="height:220px"><canvas id="cFd" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Ancienneté du compte vs Followers</div><div class="cc-sub">Followers moyens par année de création</div></div><div style="height:220px"><canvas id="cYf" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Revenus vs Followers</div><div class="cc-sub">Followers moyens par niveau de revenus</div></div><div style="height:220px"><canvas id="cFi" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Situation relationnelle vs Posts</div><div class="cc-sub">Posts moyens par semaine</div></div><div style="height:220px"><canvas id="cRs" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-2">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Scatter — Âge vs Followers</div><div class="cc-sub">Échantillon 600 profils</div></div><div style="height:240px"><canvas id="cSc1" style="display:block;width:100%;height:100%"></canvas></div></div>
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Scatter — Heures travail vs Évén. sociaux</div><div class="cc-sub">Échantillon 500 profils</div></div><div style="height:240px"><canvas id="cSc2" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+<div class="cgrid cgrid-1">
+  <div class="chart-card"><div class="cc-head"><div class="cc-title">Enfants vs Événements sociaux/mois</div></div><div style="height:200px"><canvas id="cChE" style="display:block;width:100%;height:100%"></canvas></div></div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+  function drawCharts() {
+{% if s %}
+    DW.bar('cFd', {{ s.foll_labels|tojson }}, {{ s.foll_counts|tojson }}, {colors:['#818cf8']});
+    DW.line('cYf', {{ s.yf_years|tojson }}, {{ s.yf_values|tojson }}, {color:'#34d399'});
+    DW.bar('cFi', {{ s.fi_labels|tojson }}, {{ s.fi_values|tojson }}, {colors:['#fbbf24']});
+    DW.bar('cRs', {{ s.rs_labels|tojson }}, {{ s.rs_values|tojson }}, {colors:['#f87171']});
+{% if s.sc_age %}
+    var _sc1=[];var _ag={{ s.sc_age|tojson }},_fl={{ s.sc_foll|tojson }};
+    for(var _i=0;_i<_ag.length;_i++)_sc1.push([_ag[_i],_fl[_i]]);
+    DW.scatter('cSc1',_sc1);
+{% endif %}
+{% if s.sc2_hours %}
+    var _sc2=[];var _hr={{ s.sc2_hours|tojson }},_ev={{ s.sc2_events|tojson }};
+    for(var _j=0;_j<_hr.length;_j++)_sc2.push([_hr[_j],_ev[_j]]);
+    DW.scatter('cSc2',_sc2,{colors:['#f59e0b']});
+{% endif %}
+    DW.bar('cChE', {{ s.ch_labels|tojson }}, {{ s.ch_values|tojson }}, {colors:['#06b6d4']});
+{% endif %}
+  }
+  // Draw after layout is painted
+  setTimeout(drawCharts, 300);
+  // Also redraw on resize
+  DW.register(drawCharts);
+});
+</script>
+{% endblock %}
